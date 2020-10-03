@@ -24,7 +24,7 @@
 #include "Map.h"
 #include "ObjectMgr.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Transport.h"
 #include "TransportMgr.h"
 

@@ -23,7 +23,7 @@
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Events
 {

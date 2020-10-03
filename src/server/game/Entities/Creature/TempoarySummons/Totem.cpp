@@ -31,93 +31,77 @@ Totem::Totem(SummonPropertiesEntry const* properties, Unit* owner) : Minion(prop
     m_type = TOTEM_PASSIVE;
 }
 
-void Totem::Update(uint32 time)
+void Totem::Update(uint32 diff)
 {
-    if (!GetOwner()->IsAlive() || !IsAlive())
+    if (!m_owner->IsAlive() || !IsAlive())
     {
-        UnSummon();                                         // remove self
+        UnSummon();
         return;
     }
 
-    if (m_duration <= time)
-    {
-        UnSummon();                                         // remove self
-        return;
-    }
-    else
-        m_duration -= time;
-
-    Creature::Update(time);
+    Minion::Update(diff);
 }
 
 void Totem::InitStats(uint32 duration)
 {
+    Minion::InitStats(duration);
+
     // client requires SMSG_TOTEM_CREATED to be sent before adding to world and before removing old totem
-    if (GetOwner()->GetTypeId() == TYPEID_PLAYER
-            && m_Properties->Slot >= SUMMON_SLOT_TOTEM_FIRE
-            && m_Properties->Slot < MAX_TOTEM_SLOT)
+    if (m_owner->IsPlayer()  && SummonSlot(m_Properties->Slot) >= SummonSlot::TotemFire && SummonSlot(m_Properties->Slot) < SummonSlot::Max)
     {
         WorldPacket data(SMSG_TOTEM_CREATED, 1 + 8 + 4 + 4);
         data << uint8(m_Properties->Slot - 1);
         data << uint64(GetGUID());
         data << uint32(duration);
         data << uint32(GetUInt32Value(UNIT_CREATED_BY_SPELL));
-        GetOwner()->ToPlayer()->SendDirectMessage(&data);
+        m_owner->ToPlayer()->SendDirectMessage(&data);
 
         // set display id depending on caster's race
-        SetDisplayId(GetOwner()->GetModelForTotem(PlayerTotemType(m_Properties->ID)));
+        SetDisplayId(m_owner->GetModelForTotem(PlayerTotemType(m_Properties->ID)));
     }
-
-    Minion::InitStats(duration);
 
     // Get spell cast by totem
     if (SpellInfo const* totemSpell = sSpellMgr->GetSpellInfo(GetSpell()))
         if (totemSpell->CalcCastTime(getLevel()))   // If spell has cast time -> its an active totem
             m_type = TOTEM_ACTIVE;
 
-    m_duration = duration;
-
-    SetLevel(GetOwner()->getLevel());
+    SetLevel(m_owner->getLevel());
 }
 
 void Totem::InitSummon()
 {
     if (m_type == TOTEM_PASSIVE && GetSpell())
-        CastSpell(this, GetSpell(), true);
+        CastSpell(this, GetSpell());
 
     // Some totems can have both instant effect and passive spell
     if (GetSpell(1))
-        CastSpell(this, GetSpell(1), true);
+        CastSpell(this, GetSpell(1));
 
-    if (m_Properties->ID == SUMMON_TYPE_TOTEM_FIRE && GetOwner()->HasAura(SPELL_TOTEMIC_WRATH_TALENT))
-        CastSpell(this, SPELL_TOTEMIC_WRATH, true);
+    if (m_Properties->ID == SUMMON_TYPE_TOTEM_FIRE && m_owner->HasAura(SPELL_TOTEMIC_WRATH_TALENT))
+        CastSpell(this, SPELL_TOTEMIC_WRATH);
+
+    Minion::InitSummon();
 }
 
 void Totem::UnSummon(uint32 msTime)
 {
-    if (msTime)
-    {
-        m_Events.AddEvent(new ForcedUnsummonDelayEvent(*this), m_Events.CalculateTime(msTime));
-        return;
-    }
-
     CombatStop();
     RemoveAurasDueToSpell(GetSpell(), GetGUID());
 
     // clear owner's totem slot
-    for (uint8 i = SUMMON_SLOT_TOTEM_FIRE; i < MAX_TOTEM_SLOT; ++i)
+    for (uint8 i = AsUnderlyingType(SummonSlot::TotemFire); i < AsUnderlyingType(SummonSlot::Max); ++i)
     {
-        if (GetOwner()->m_SummonSlot[i] == GetGUID())
+        if (m_owner->m_SummonSlot[i] == GetGUID())
         {
-            GetOwner()->m_SummonSlot[i].Clear();
+            m_owner->m_SummonSlot[i].Clear();
             break;
         }
     }
 
-    GetOwner()->RemoveAurasDueToSpell(GetSpell(), GetGUID());
+    m_owner->RemoveAurasDueToSpell(GetSpell(), GetGUID());
 
     // remove aura all party members too
-    if (Player* owner = GetOwner()->ToPlayer())
+    if (Player* owner = m_owner->ToPlayer())
     {
         owner->SendAutoRepeatCancel(this);
 
@@ -135,14 +119,7 @@ void Totem::UnSummon(uint32 msTime)
         }
     }
 
-    // Despawn elementals
-    RemoveAllControlled();
-
-    // any totem unsummon look like as totem kill, req. for proper animation
-    if (IsAlive())
-        setDeathState(DEAD);
-
-    AddObjectToRemoveList();
+    Minion::UnSummon(msTime);
 }
 
 bool Totem::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index, Unit* caster) const

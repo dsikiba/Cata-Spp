@@ -23,7 +23,7 @@
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "trial_of_the_crusader.h"
 
 BossBoundaryData const boundaries =

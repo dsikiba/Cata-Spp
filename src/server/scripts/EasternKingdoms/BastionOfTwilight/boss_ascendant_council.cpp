@@ -28,7 +28,7 @@
 #include "SpellMgr.h"
 #include "SpellHistory.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Unit.h"
 #include "DBCStores.h"
 #include "bastion_of_twilight.h"

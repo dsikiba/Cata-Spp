@@ -29,7 +29,7 @@
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Unit.h"
 #include "Vehicle.h"
 #include "bastion_of_twilight.h"

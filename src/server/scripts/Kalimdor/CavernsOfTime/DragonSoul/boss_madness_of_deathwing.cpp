@@ -35,7 +35,7 @@
 #include "SpellScript.h"
 #include "SpellMgr.h"
 #include "Spell.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 
 #include <array>

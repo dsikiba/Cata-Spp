@@ -16,6 +16,7 @@
  */
 
 #include "InstanceScript.h"
+#include "Minion.h"
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "PassiveAI.h"
@@ -178,7 +179,7 @@ struct boss_blackheart_the_inciter_mc_dummy : public NullCreatureAI
                     {
                         me->GetThreatManager().AddThreat(trigger, 0.0f);
                         trigger->GetThreatManager().AddThreat(who, 0.0f);
-                        for (Unit* other : trigger->m_Controlled)
+                        for (Minion* other : trigger->_createdMinions)
                         {
                             me->GetThreatManager().AddThreat(other, 0.0f);
                             other->GetThreatManager().AddThreat(who, 0.0f);
@@ -187,7 +188,7 @@ struct boss_blackheart_the_inciter_mc_dummy : public NullCreatureAI
     }
     void UpdateAI(uint32 /*diff*/) override
     {
-        if (me->m_Controlled.empty())
+        if (me->_createdMinions.empty())
             me->DespawnOrUnsummon();
     }
     PlayerAI* GetAIForCharmedPlayer(Player* player) override

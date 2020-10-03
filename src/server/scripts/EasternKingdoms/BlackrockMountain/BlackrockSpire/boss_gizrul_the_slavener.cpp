@@ -19,7 +19,7 @@
 #include "blackrock_spire.h"
 #include "MotionMaster.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

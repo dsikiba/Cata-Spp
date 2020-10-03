@@ -27,7 +27,7 @@ EndScriptData */
 #include "magisters_terrace.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 struct Speech
 {

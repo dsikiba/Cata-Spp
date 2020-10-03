@@ -4308,7 +4308,7 @@ void AuraEffect::HandleModDamageDone(AuraApplication const* aurApp, uint8 mode, 
             if (GetMiscValue() & (1 << i))
                 target->ApplyModUInt32Value(baseField + i, GetAmount(), apply);
 
-        if (Guardian* pet = target->ToPlayer()->GetGuardianPet())
+        if (Guardian* pet = target->ToPlayer()->GetActiveGuardian())
             pet->UpdateAttackPowerAndDamage();
     }
 }
@@ -4503,7 +4503,7 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     break;
                 case 34026:   // kill command
                 {
-                    Unit* pet = target->GetGuardianPet();
+                    Unit* pet = target->GetActiveGuardian();
                     if (!pet)
                         break;
 
@@ -6090,7 +6090,7 @@ void AuraEffect::HandlePeriodicManaLeechAuraTick(Unit* target, Unit* caster) con
     }
 
     // Drain Mana - Mana Feed effect
-    if (caster->GetGuardianPet() && m_spellInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && m_spellInfo->SpellFamilyFlags[0] & 0x00000010)
+    if (caster->GetActiveGuardian() && m_spellInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && m_spellInfo->SpellFamilyFlags[0] & 0x00000010)
     {
         int32 manaFeedVal = 0;
         if (AuraEffect const* aurEff = GetBase()->GetEffect(EFFECT_1))

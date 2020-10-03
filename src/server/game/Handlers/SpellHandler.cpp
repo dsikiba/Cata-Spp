@@ -23,6 +23,7 @@
 #include "DBCStores.h"
 #include "GameObject.h"
 #include "GameObjectAI.h"
+#include "Guardian.h"
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "Item.h"
@@ -555,7 +556,7 @@ void WorldSession::HandlePetCancelAuraOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (pet != GetPlayer()->GetGuardianPet() && pet != GetPlayer()->GetCharm())
+    if (pet != GetPlayer()->GetActiveGuardian() && pet != GetPlayer()->GetCharm())
     {
         TC_LOG_ERROR("network", "HandlePetCancelAura: %s is not a pet of player '%s'", guid.ToString().c_str(), GetPlayer()->GetName().c_str());
         return;

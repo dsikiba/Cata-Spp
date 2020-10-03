@@ -24,7 +24,7 @@
 #include "MotionMaster.h"
 #include "oculus.h"
 #include "PhasingHandler.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldPacket.h"
 #include "WorldStatePackets.h"
 

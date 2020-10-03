@@ -41,6 +41,7 @@
 #include "PathGenerator.h"
 #include "Pet.h"
 #include "Player.h"
+#include "Puppet.h"
 #include "ScriptMgr.h"
 #include "SharedDefines.h"
 #include "SpellAuraEffects.h"
@@ -49,7 +50,7 @@
 #include "SpellMgr.h"
 #include "SpellPackets.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "TradeData.h"
 #include "Unit.h"
 #include "UpdateData.h"
@@ -1557,7 +1558,7 @@ void Spell::SelectImplicitCasterObjectTargets(SpellEffIndex effIndex, SpellImpli
             target = m_caster->GetCharmerOrOwner();
             break;
         case TARGET_UNIT_PET:
-            target = m_caster->GetGuardianPet();
+            target = m_caster->GetActiveGuardian();
             break;
         case TARGET_UNIT_SUMMONER:
             if (m_caster->IsSummon())
@@ -3448,10 +3449,9 @@ void Spell::_cast(bool skipCheck)
         // This prevents spells such as Hunter's Mark from triggering pet attack
         if (this->GetSpellInfo()->DmgClass != SPELL_DAMAGE_CLASS_NONE)
             if (Unit* unitTarget = m_targets.GetUnitTarget())
-                for (Unit* controlled : playerCaster->m_Controlled)
-                    if (Creature* cControlled = controlled->ToCreature())
-                        if (cControlled->IsAIEnabled)
-                            cControlled->AI()->OwnerAttacked(unitTarget);
+                for (Minion* controlled : playerCaster->_createdMinions)
+                    if (controlled->IsAIEnabled)
+                        controlled->AI()->OwnerAttacked(unitTarget);
     }
 
     SetExecutedCurrently(true);
@@ -3553,7 +3553,7 @@ void Spell::_cast(bool skipCheck)
     }
 
     if (m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET))
-        if (Creature* pet = ObjectAccessor::GetCreature(*m_caster, m_caster->GetPetGUID()))
+        if (Creature* pet = ObjectAccessor::GetCreature(*m_caster, m_caster->GetPetSummonSlotGUID()))
             pet->DespawnOrUnsummon();
 
     PrepareTriggersExecutedOnHit();
@@ -5621,7 +5621,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     {
         if (m_spellInfo->Effects[j].TargetA.GetTarget() == TARGET_UNIT_PET)
         {
-            if (!m_caster->GetGuardianPet())
+            if (!m_caster->GetActiveGuardian())
             {
                 if (m_triggeredByAuraSpell)              // not report pet not existence for triggered spells
                     return SPELL_FAILED_DONT_REPORT;
@@ -5963,7 +5963,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             }
             case SPELL_EFFECT_RESURRECT_PET:
             {
-                Creature* pet = m_caster->GetGuardianPet();
+                Creature* pet = m_caster->GetActiveGuardian();
 
                 if (pet && pet->IsAlive())
                     return SPELL_FAILED_ALREADY_HAVE_SUMMON;
@@ -5976,15 +5976,17 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 SummonPropertiesEntry const* SummonProperties = sSummonPropertiesStore.LookupEntry(m_spellInfo->Effects[i].MiscValueB);
                 if (!SummonProperties)
                     break;
-                switch (SummonProperties->Control)
+                switch (SummonControl(SummonProperties->Control))
                 {
-                    case SUMMON_CATEGORY_PET:
-                        if (!m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET) && m_caster->GetPetGUID())
+                    case SummonControl::Pet:
+                        if (!m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET) && m_caster->GetPetSummonSlotGUID())
                             return SPELL_FAILED_ALREADY_HAVE_SUMMON;
                         [[fallthrough]]; //  check both GetPetGUID() and GetCharmGUID for SUMMON_CATEGORY_PET*/
-                    case SUMMON_CATEGORY_PUPPET:
+                    case SummonControl::Puppet:
                         if (m_caster->GetCharmGUID())
                             return SPELL_FAILED_ALREADY_HAVE_CHARM;
+                        break;
+                    default:
                         break;
                 }
                 break;
@@ -5995,14 +5997,14 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 {
                     if (m_targets.GetUnitTarget()->GetTypeId() != TYPEID_PLAYER)
                         return SPELL_FAILED_BAD_TARGETS;
-                    if (!m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET) && m_targets.GetUnitTarget()->GetPetGUID())
+                    if (!m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET) && m_targets.GetUnitTarget()->GetPetSummonSlotGUID())
                         return SPELL_FAILED_ALREADY_HAVE_SUMMON;
                 }
                 break;
             }
             case SPELL_EFFECT_SUMMON_PET:
             {
-                if (m_caster->GetPetGUID())                  //let warlock do a replacement summon
+                if (m_caster->GetPetSummonSlotGUID())                  //let warlock do a replacement summon
                 {
                     if (m_caster->GetTypeId() == TYPEID_PLAYER)
                     {
@@ -6129,7 +6131,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 if (m_spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_CHARM
                     || m_spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_POSSESS)
                 {
-                    if (!m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET) && m_caster->GetPetGUID())
+                    if (!m_spellInfo->HasAttribute(SPELL_ATTR1_DISMISS_PET) && m_caster->GetPetSummonSlotGUID())
                         return SPELL_FAILED_ALREADY_HAVE_SUMMON;
 
                     if (m_caster->GetCharmGUID())

@@ -29,7 +29,7 @@ EndScriptData */
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "temple_of_ahnqiraj.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*
  * This is a 2 phases events. Here follows an explanation of the main events and transition between phases and sub-phases.

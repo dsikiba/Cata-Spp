@@ -27,7 +27,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Weather.h"
 
 enum Texts

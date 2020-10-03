@@ -28,7 +28,7 @@ EndScriptData */
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
 #include "onyxias_lair.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 BossBoundaryData const boundaries =
 {

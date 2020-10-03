@@ -25,7 +25,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
 #include "sunwell_plateau.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldSession.h"
 
 enum Yells

@@ -23,7 +23,7 @@
 #include "Spell.h"
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Map.h"
 #include "MoveSplineInit.h"
 #include "PassiveAI.h"

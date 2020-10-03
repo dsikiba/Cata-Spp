@@ -42,7 +42,7 @@ EndContentData */
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*######
 ## at_coilfang_waterfall

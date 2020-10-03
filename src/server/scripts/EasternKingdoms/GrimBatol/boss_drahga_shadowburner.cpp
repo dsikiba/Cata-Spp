@@ -25,7 +25,7 @@
 #include "Player.h"
 #include "MotionMaster.h"
 #include "InstanceScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "grim_batol.h"
 
 enum Spells

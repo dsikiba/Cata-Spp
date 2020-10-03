@@ -56,7 +56,7 @@ EndContentData */
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldSession.h"
 
 /*######

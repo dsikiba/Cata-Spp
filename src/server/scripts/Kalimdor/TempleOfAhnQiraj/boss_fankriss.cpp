@@ -25,7 +25,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "temple_of_ahnqiraj.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 #define SOUND_SENTENCE_YOU 8588
 #define SOUND_SERVE_TO     8589

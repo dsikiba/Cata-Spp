@@ -27,7 +27,7 @@ EndScriptData */
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "serpent_shrine.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum HydrossTheUnstable
 {

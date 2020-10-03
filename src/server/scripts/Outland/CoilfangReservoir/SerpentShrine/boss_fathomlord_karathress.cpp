@@ -28,7 +28,7 @@ EndScriptData */
 #include "ObjectAccessor.h"
 #include "ScriptedEscortAI.h"
 #include "serpent_shrine.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum FathomlordKarathress
 {

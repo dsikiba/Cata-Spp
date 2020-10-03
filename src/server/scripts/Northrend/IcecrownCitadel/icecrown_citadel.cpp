@@ -26,7 +26,7 @@
 #include "ScriptedEscortAI.h"
 #include "SmartAI.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "VehicleDefines.h"
 
 enum ICCTexts

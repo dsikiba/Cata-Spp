@@ -20,7 +20,7 @@
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "SpellAuras.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Kelidan
 {

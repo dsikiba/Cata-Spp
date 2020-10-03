@@ -23,7 +23,7 @@
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "ulduar.h"
 
 /* @todo Achievements

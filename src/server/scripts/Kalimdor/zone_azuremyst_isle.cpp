@@ -40,7 +40,7 @@ EndContentData */
 #include "ObjectAccessor.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*######
 ## npc_draenei_survivor

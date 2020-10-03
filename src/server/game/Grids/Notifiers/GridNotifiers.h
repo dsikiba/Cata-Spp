@@ -27,7 +27,7 @@
 #include "Player.h"
 #include "Spell.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "UnitAI.h"
 #include "UpdateData.h"
 

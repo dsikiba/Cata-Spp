@@ -29,7 +29,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum IllidanSay
 {

@@ -22,6 +22,7 @@
 #include "DBCStores.h"
 #include "Language.h"
 #include "Map.h"
+#include "Minion.h"
 #include "MiscPackets.h"
 #include "ObjectMgr.h"
 #include "PartyPackets.h"
@@ -50,11 +51,10 @@ inline PhaseFlags GetPhaseFlags(uint32 phaseId)
 template<typename Func>
 inline void ForAllControlled(Unit* unit, Func&& func)
 {
-    for (Unit* controlled : unit->m_Controlled)
-        if (controlled->GetTypeId() != TYPEID_PLAYER)
-            func(controlled);
+    for (Minion* controlled : unit->_createdMinions)
+        func(controlled);
 
-    for (uint8 i = 0; i < MAX_SUMMON_SLOT; ++i)
+    for (uint8 i = 0; i < AsUnderlyingType(SummonSlot::Max); ++i)
         if (!unit->m_SummonSlot[i].IsEmpty())
             if (Creature* summon = unit->GetMap()->GetCreature(unit->m_SummonSlot[i]))
                 func(summon);
@@ -68,7 +68,7 @@ void PhasingHandler::AddPhase(WorldObject* object, uint32 phaseId, bool updateVi
     if (Unit* unit = object->ToUnit())
     {
         unit->OnPhaseChange();
-        ForAllControlled(unit, [&](Unit* controlled)
+        ForAllControlled(unit, [&](Creature* controlled)
         {
             AddPhase(controlled, phaseId, updateVisibility);
         });

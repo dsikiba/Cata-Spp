@@ -83,7 +83,7 @@ public:
             return false;
         }
 
-        if (player->GetPetGUID())
+        if (player->GetPetSummonSlotGUID())
         {
             handler->PSendSysMessage("You already have a pet");
             handler->SetSentErrorMessage(true);
@@ -127,7 +127,6 @@ public:
         // visual effect for levelup
         pet->SetUInt32Value(UNIT_FIELD_LEVEL, creatureTarget->getLevel());
 
-        player->SetMinion(pet, true);
         pet->SavePetToDB(PET_SAVE_NEW_PET);
         player->PetSpellInitialize();
 

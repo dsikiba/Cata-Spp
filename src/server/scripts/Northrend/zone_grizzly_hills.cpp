@@ -23,7 +23,7 @@
 #include "ScriptedEscortAI.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*######
 ## Quest 12027: Mr. Floppy's Perilous Adventure

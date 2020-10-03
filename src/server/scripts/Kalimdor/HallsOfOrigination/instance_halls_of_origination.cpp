@@ -25,7 +25,7 @@
 #include "InstanceScript.h"
 #include "Map.h"
 #include "World.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 DoorData const doorData[] =
 {

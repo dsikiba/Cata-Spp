@@ -26,7 +26,7 @@
 #include "ruins_of_ahnqiraj.h"
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Weather.h"
 #include "WorldPacket.h"
 

@@ -104,16 +104,11 @@ void WorldSession::HandlePetAction(WorldPacket& recvData)
     if (pet->GetTypeId() == TYPEID_PLAYER && !(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))
         return;
 
-    if (GetPlayer()->m_Controlled.size() == 1)
+    if (_player->_ownedMinions.size() == 1 || _player->_charmedUnits.find(pet) != _player->_charmedUnits.end())
         HandlePetActionHelper(pet, guid1, spellid, flag, guid2, x, y, z);
     else
     {
-        //If a pet is dismissed, m_Controlled will change
-        std::vector<Unit*> controlled;
-        for (Unit::ControlList::iterator itr = GetPlayer()->m_Controlled.begin(); itr != GetPlayer()->m_Controlled.end(); ++itr)
-            if ((*itr)->GetEntry() == pet->GetEntry() && (*itr)->IsAlive())
-                controlled.push_back(*itr);
-        for (std::vector<Unit*>::iterator itr = controlled.begin(); itr != controlled.end(); ++itr)
+        for (std::set<Minion*>::iterator itr = _player->_ownedMinions.begin(); itr != _player->_ownedMinions.end(); ++itr)
             HandlePetActionHelper(*itr, guid1, spellid, flag, guid2, x, y, z);
     }
 }
@@ -582,7 +577,7 @@ void WorldSession::HandlePetSetAction(WorldPacket& recvData)
                     if (pet->GetTypeId() == TYPEID_UNIT && pet->IsPet())
                         ((Pet*)pet)->ToggleAutocast(spellInfo, true);
                     else
-                        for (Unit::ControlList::iterator itr = GetPlayer()->m_Controlled.begin(); itr != GetPlayer()->m_Controlled.end(); ++itr)
+                        for (std::set<Minion*>::iterator itr = GetPlayer()->_ownedMinions.begin(); itr != GetPlayer()->_ownedMinions.end(); ++itr)
                             if ((*itr)->GetEntry() == pet->GetEntry())
                                 (*itr)->GetCharmInfo()->ToggleCreatureAutocast(spellInfo, true);
                 }
@@ -592,7 +587,7 @@ void WorldSession::HandlePetSetAction(WorldPacket& recvData)
                     if (pet->GetTypeId() == TYPEID_UNIT && pet->IsPet())
                         ((Pet*)pet)->ToggleAutocast(spellInfo, false);
                     else
-                        for (Unit::ControlList::iterator itr = GetPlayer()->m_Controlled.begin(); itr != GetPlayer()->m_Controlled.end(); ++itr)
+                        for (std::set<Minion*>::iterator itr = GetPlayer()->_ownedMinions.begin(); itr != GetPlayer()->_ownedMinions.end(); ++itr)
                             if ((*itr)->GetEntry() == pet->GetEntry())
                                 (*itr)->GetCharmInfo()->ToggleCreatureAutocast(spellInfo, false);
                 }
@@ -717,7 +712,7 @@ void WorldSession::HandlePetSpellAutocastOpcode(WorldPacket& recvPacket)
     uint8  state;                                           //1 for on, 0 for off
     recvPacket >> guid >> spellid >> state;
 
-    if (!_player->GetGuardianPet() && !_player->GetCharm())
+    if (!_player->GetActiveGuardian() && !_player->GetCharm())
         return;
 
     if (guid.IsPlayer())
@@ -725,7 +720,7 @@ void WorldSession::HandlePetSpellAutocastOpcode(WorldPacket& recvPacket)
 
     Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
 
-    if (!pet || (pet != _player->GetGuardianPet() && pet != _player->GetCharm()))
+    if (!pet || (pet != _player->GetActiveGuardian() && pet != _player->GetCharm()))
     {
         TC_LOG_ERROR("entities.pet", "HandlePetSpellAutocastOpcode. %s isn't pet of player %s (%s).", guid.ToString().c_str(), GetPlayer()->GetName().c_str(), GetPlayer()->GetGUID().ToString().c_str());
         return;
@@ -771,12 +766,12 @@ void WorldSession::HandlePetCastSpellOpcode(WorldPacket& recvPacket)
     TC_LOG_DEBUG("entities.pet", "WORLD: CMSG_PET_CAST_SPELL, %s, castCount: %u, spellId %u, castFlags %u", guid.ToString().c_str(), castCount, spellId, castFlags);
 
     // This opcode is also sent from charmed and possessed units (players and creatures)
-    if (!_player->GetGuardianPet() && !_player->GetCharm())
+    if (!_player->GetActiveGuardian() && !_player->GetCharm())
         return;
 
     Unit* caster = ObjectAccessor::GetUnit(*_player, guid);
 
-    if (!caster || (caster != _player->GetGuardianPet() && caster != _player->GetCharm()))
+    if (!caster || (caster != _player->GetActiveGuardian() && caster != _player->GetCharm()))
     {
         TC_LOG_ERROR("entities.pet", "HandlePetCastSpellOpcode: %s isn't pet of player %s (%s).", guid.ToString().c_str(), GetPlayer()->GetName().c_str(), GetPlayer()->GetGUID().ToString().c_str());
         return;

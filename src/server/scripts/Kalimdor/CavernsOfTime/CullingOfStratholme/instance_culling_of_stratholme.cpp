@@ -29,7 +29,7 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldStatePackets.h"
 #include <array>
 #include <unordered_map>

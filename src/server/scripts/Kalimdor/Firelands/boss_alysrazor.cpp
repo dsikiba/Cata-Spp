@@ -27,7 +27,7 @@
 #include "PassiveAI.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Texts
 {

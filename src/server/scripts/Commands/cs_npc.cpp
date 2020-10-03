@@ -1483,7 +1483,7 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        if (player->GetPetGUID())
+        if (player->GetPetSummonSlotGUID())
         {
             handler->SendSysMessage (LANG_YOU_ALREADY_HAVE_PET);
             handler->SetSentErrorMessage (true);
@@ -1527,9 +1527,6 @@ public:
 
         // visual effect for levelup
         pet->SetUInt32Value(UNIT_FIELD_LEVEL, level);
-
-        // caster have pet now
-        player->SetMinion(pet, true);
 
         pet->SavePetToDB(PET_SAVE_NEW_PET);
         player->PetSpellInitialize();

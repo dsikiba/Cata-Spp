@@ -32,7 +32,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "serpent_shrine.h"
 #include "Spell.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldSession.h"
 
 enum LadyVashj

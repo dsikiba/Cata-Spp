@@ -36,6 +36,7 @@
 #include "Log.h"
 #include "LootMgr.h"
 #include "MapManager.h"
+#include "Minion.h"
 #include "MiscPackets.h"
 #include "MotionMaster.h"
 #include "MoveSpline.h"
@@ -49,7 +50,7 @@
 #include "ScriptedGossip.h"
 #include "SpellAuraEffects.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Transport.h"
 #include "Util.h"
 #include "Vehicle.h"
@@ -1104,11 +1105,21 @@ Unit* Creature::SelectVictim()
                     target = owner->getAttackerForHelper();
                 if (!target)
                 {
-                    for (ControlList::const_iterator itr = owner->m_Controlled.begin(); itr != owner->m_Controlled.end(); ++itr)
+                    for (Minion* minion : owner->_createdMinions)
                     {
-                        if ((*itr)->IsInCombat())
+                        if (minion->IsInCombat())
                         {
-                            target = (*itr)->getAttackerForHelper();
+                            target = minion->getAttackerForHelper();
+                            if (target)
+                                break;
+                        }
+                    }
+
+                    for (Unit* controlled : owner->_charmedUnits)
+                    {
+                        if (controlled->IsInCombat())
+                        {
+                            target = controlled->getAttackerForHelper();
                             if (target)
                                 break;
                         }

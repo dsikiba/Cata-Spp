@@ -387,7 +387,7 @@ class spell_dk_death_pact : public SpellScript
     {
         // Check if we have valid targets, otherwise skip spell casting here
         if (Player* player = GetCaster()->ToPlayer())
-            for (Unit::ControlList::const_iterator itr = player->m_Controlled.begin(); itr != player->m_Controlled.end(); ++itr)
+            for (std::set<Minion*>::const_iterator itr = player->_createdMinions.begin(); itr != player->_createdMinions.end(); ++itr)
                 if (Creature* undeadPet = (*itr)->ToCreature())
                     if (undeadPet->IsAlive() &&
                         undeadPet->GetOwnerOrCreatorGUID() == player->GetGUID() &&

@@ -25,7 +25,7 @@
 #include "Player.h"
 #include "Spell.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "ulduar.h"
 #include "Vehicle.h"
 #include "WorldPacket.h"

@@ -22,7 +22,7 @@
 #include "MotionMaster.h"
 #include "nexus.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

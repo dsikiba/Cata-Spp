@@ -1064,7 +1064,7 @@ class spell_hun_tame_beast : public SpellScriptLoader
                     if (!target->GetCreatureTemplate()->IsTameable(player->ToPlayer()->CanTameExoticPets()))
                         return SendTameFailResult(PET_TAME_FAILURE_CANNOT_TAME_EXOTIC);
 
-                    if (player->GetPetGUID())
+                    if (player->GetPetSummonSlotGUID())
                         return SendTameFailResult(PET_TAME_FAILURE_ACTIVE_SUMMON);
 
                     if (player->GetCharmGUID())

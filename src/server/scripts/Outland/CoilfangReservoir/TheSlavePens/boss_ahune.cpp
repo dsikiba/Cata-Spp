@@ -30,7 +30,7 @@
 #include "ScriptedGossip.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "the_slave_pens.h"
 
 enum Spells

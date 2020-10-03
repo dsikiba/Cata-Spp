@@ -29,7 +29,7 @@ Category: Caverns of Time, The Black Morass
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "the_black_morass.h"
 
 enum Misc

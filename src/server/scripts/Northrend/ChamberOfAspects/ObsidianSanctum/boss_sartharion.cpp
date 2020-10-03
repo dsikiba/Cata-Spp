@@ -23,7 +23,7 @@
 #include "ObjectAccessor.h"
 #include "obsidian_sanctum.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Enums
 {

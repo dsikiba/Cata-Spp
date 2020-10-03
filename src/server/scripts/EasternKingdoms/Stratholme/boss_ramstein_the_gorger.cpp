@@ -26,7 +26,7 @@ EndScriptData */
 #include "InstanceScript.h"
 #include "ScriptedCreature.h"
 #include "stratholme.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

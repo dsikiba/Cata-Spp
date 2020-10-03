@@ -31,7 +31,7 @@
 #include "SpellScript.h"
 #include "DynamicObject.h"
 #include "Creature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum DruidSpells
 {

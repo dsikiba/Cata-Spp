@@ -33,7 +33,7 @@ EndScriptData */
 #include "ObjectAccessor.h"
 #include "onyxias_lair.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Yells
 {

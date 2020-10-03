@@ -26,7 +26,7 @@
 #include "MotionMaster.h"
 #include "Map.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 ObjectData const creatureData[] =
 {

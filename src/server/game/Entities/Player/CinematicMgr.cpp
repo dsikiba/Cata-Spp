@@ -20,7 +20,7 @@
 #include "M2Stores.h"
 #include "MotionMaster.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 CinematicMgr::CinematicMgr(Player* playerref)
 {

@@ -23,7 +23,7 @@
 #include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "MotionMaster.h"
 #include "InstanceScript.h"
 #include "ObjectAccessor.h"

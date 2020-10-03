@@ -28,7 +28,7 @@
 #include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Player.h"
 #include "SpellScript.h"
 

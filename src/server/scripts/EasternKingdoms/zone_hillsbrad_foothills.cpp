@@ -29,7 +29,7 @@
 #include "SpellScript.h"
 #include "SpellMgr.h"
 #include "SpellHistory.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 
 enum PlansVsZombies

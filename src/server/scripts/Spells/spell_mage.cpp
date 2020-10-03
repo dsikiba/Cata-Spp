@@ -1016,7 +1016,7 @@ class spell_mage_permafrost : public AuraScript
 
     bool DoCheck(ProcEventInfo& eventInfo)
     {
-        return GetTarget()->GetGuardianPet() && eventInfo.GetDamageInfo()->GetDamage() && eventInfo.GetProcTarget();
+        return GetTarget()->GetActiveGuardian() && eventInfo.GetDamageInfo()->GetDamage() && eventInfo.GetProcTarget();
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

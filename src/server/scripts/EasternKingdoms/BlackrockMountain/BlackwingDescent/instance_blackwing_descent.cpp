@@ -23,7 +23,7 @@
 #include "Transport.h"
 #include "EventMap.h"
 #include "CreatureAI.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldStatePackets.h"
 #include "blackwing_descent.h"
 

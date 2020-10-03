@@ -3770,15 +3770,14 @@ enum DiminishingGroup : uint16
     DIMINISHING_MAX
 };
 
-enum SummonCategory
+enum class SummonControl : uint8
 {
-    SUMMON_CATEGORY_WILD        = 0,
-    SUMMON_CATEGORY_ALLY        = 1,
-    SUMMON_CATEGORY_PET         = 2,
-    SUMMON_CATEGORY_PUPPET      = 3,
-    SUMMON_CATEGORY_VEHICLE     = 4,
-    SUMMON_CATEGORY_UNK         = 5  // as of patch 3.3.5a only Bone Spike in Icecrown Citadel
-                                     // uses this category
+    Wild    = 0,
+    Ally    = 1,
+    Pet     = 2,
+    Puppet  = 3,
+    Vehicle = 4,
+    Unk     = 5
 };
 
 enum class SummonTitle : int32
@@ -3799,17 +3798,16 @@ enum class SummonTitle : int32
     aka                 = 13
 };
 
-enum SummonSlot
+enum class SummonSlot : uint8
 {
-    SUMMON_SLOT_PET         = 0,
-    SUMMON_SLOT_TOTEM_FIRE  = 1,
-    SUMMON_SLOT_TOTEM_EARTH = 2,
-    SUMMON_SLOT_TOTEM_WATER = 3,
-    SUMMON_SLOT_TOTEM_AIR   = 4,
-    SUMMON_SLOT_MINIPET     = 5,
-    SUMMON_SLOT_QUEST       = 6,
-
-    MAX_SUMMON_SLOT
+    Pet         = 0,
+    TotemFire   = 1,
+    TotemEarth  = 2,
+    TotemWater  = 3,
+    TotemAir    = 4,
+    Companion   = 5,
+    Quest       = 6,
+    Max
 };
 
 #define MAX_TOTEM_SLOT      5

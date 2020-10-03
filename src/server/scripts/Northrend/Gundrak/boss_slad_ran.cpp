@@ -21,7 +21,7 @@
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "SpellAuras.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

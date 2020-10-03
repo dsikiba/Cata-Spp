@@ -24,7 +24,7 @@
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Unit.h"
 #include "SpellInfo.h"
 #include "zulgurub.h"

@@ -28,7 +28,7 @@ EndScriptData */
 #include "ObjectAccessor.h"
 #include "ScriptedEscortAI.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "trial_of_the_champion.h"
 /*
 enum Yells

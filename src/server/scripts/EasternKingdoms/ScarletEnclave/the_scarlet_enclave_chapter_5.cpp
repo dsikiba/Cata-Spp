@@ -23,7 +23,7 @@
 #include "Player.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 #define LESS_MOB // if you do not have a good server and do not want it to be laggy as hell
 //Light of Dawn

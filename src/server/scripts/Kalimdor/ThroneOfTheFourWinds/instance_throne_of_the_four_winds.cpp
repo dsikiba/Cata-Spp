@@ -24,7 +24,7 @@
 #include "throne_of_the_four_winds.h"
 #include "AreaBoundary.h"
 #include "Map.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 #include "Weather.h"
 #include "Player.h"

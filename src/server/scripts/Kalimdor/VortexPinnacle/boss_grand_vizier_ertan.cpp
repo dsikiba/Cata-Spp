@@ -20,7 +20,7 @@
 #include "PassiveAI.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "InstanceScript.h"
 #include "SpellScript.h"
 #include "Unit.h"

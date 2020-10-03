@@ -34,7 +34,7 @@ EndScriptData */
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "sunwell_plateau.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*** Speech and sounds***/
 enum Yells

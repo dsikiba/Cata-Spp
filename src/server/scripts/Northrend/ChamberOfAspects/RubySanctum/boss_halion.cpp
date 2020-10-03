@@ -29,7 +29,7 @@
 #include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 
 enum Texts

@@ -26,7 +26,7 @@
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 #include "lost_city_of_the_tolvir.h"
 

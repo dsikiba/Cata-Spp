@@ -29,7 +29,7 @@ EndScriptData */
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum ShadeOfAran
 {

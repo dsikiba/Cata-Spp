@@ -19,7 +19,7 @@
 #include "ahnkahet.h"
 #include "InstanceScript.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

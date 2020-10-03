@@ -28,7 +28,7 @@ EndScriptData */
 #include "MotionMaster.h"
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "the_eye.h"
 
 enum Spells

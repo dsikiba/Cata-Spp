@@ -32,7 +32,7 @@
 #include "Transport.h"
 #include "InstanceScript.h"
 #include "MotionMaster.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "blackwing_descent.h"

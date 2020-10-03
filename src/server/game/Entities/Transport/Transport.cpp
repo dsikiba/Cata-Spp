@@ -20,11 +20,13 @@
 #include "Common.h"
 #include "DBCStores.h"
 #include "GameObjectAI.h"
+#include "Guardian.h"
 #include "Log.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
 #include "PhasingHandler.h"
 #include "Player.h"
+#include "Puppet.h"
 #include "ScriptMgr.h"
 #include "Spline.h"
 #include "Totem.h"
@@ -83,7 +85,7 @@ void Transport::AddPassenger(WorldObject* passenger)
 
         if (Unit* unit = passenger->ToUnit())
         {
-            if (Guardian* guardian = unit->GetGuardianPet())
+            if (Guardian* guardian = unit->GetActiveGuardian())
             {
                 if (!guardian->IsPet() || guardian->GetCharmInfo()->GetCommandState() == COMMAND_FOLLOW)
                 {
@@ -134,7 +136,7 @@ void Transport::RemovePassenger(WorldObject* passenger)
 
         if (Unit* unit = passenger->ToUnit())
         {
-            if (Guardian* guardian = unit->GetGuardianPet())
+            if (Guardian* guardian = unit->GetActiveGuardian())
                 if (!guardian->IsPet() || guardian->GetCharmInfo()->GetCommandState() == COMMAND_FOLLOW)
                 {
                     if (guardian->GetTransGUID() == GetGUID())
@@ -729,7 +731,7 @@ void MapTransport::RemovePassenger(WorldObject* passenger)
         TC_LOG_DEBUG("entities.transport", "Object %s removed from transport %s.", passenger->GetName().c_str(), GetName().c_str());
 
         if (Unit* unit = passenger->ToUnit())
-            if (Guardian* guardian = unit->GetGuardianPet())
+            if (Guardian* guardian = unit->GetActiveGuardian())
                 if (!guardian->IsPet() || guardian->GetCharmInfo()->GetCommandState() == COMMAND_FOLLOW)
                     if (guardian->GetTransGUID() == GetGUID())
                         RemovePassenger(guardian);
@@ -855,46 +857,35 @@ TempSummon* MapTransport::SummonPassenger(uint32 entry, Position const& pos, Tem
     uint32 mask = UNIT_MASK_SUMMON;
     if (properties)
     {
-        switch (properties->Control)
+        switch (SummonControl(properties->Control))
         {
-            case SUMMON_CATEGORY_PET:
-                mask = UNIT_MASK_GUARDIAN;
+            case SummonControl::Wild:
+            case SummonControl::Unk:
                 break;
-            case SUMMON_CATEGORY_PUPPET:
-                mask = UNIT_MASK_PUPPET;
-                break;
-            case SUMMON_CATEGORY_VEHICLE:
+            case SummonControl::Vehicle:
+            case SummonControl::Ally:
                 mask = UNIT_MASK_MINION;
                 break;
-            case SUMMON_CATEGORY_WILD:
-            case SUMMON_CATEGORY_ALLY:
-            case SUMMON_CATEGORY_UNK:
-            {
-                switch (SummonTitle(properties->Title))
-                {
-                    case SummonTitle::Minion:
-                    case SummonTitle::Guardian:
-                    case SummonTitle::Runeblade:
-                        mask = UNIT_MASK_GUARDIAN;
-                        break;
-                    case SummonTitle::Totem:
-                    case SummonTitle::Lightwell:
-                        mask = UNIT_MASK_TOTEM;
-                        break;
-                    case SummonTitle::Vehicle:
-                    case SummonTitle::Mount:
-                        mask = UNIT_MASK_SUMMON;
-                        break;
-                    case SummonTitle::Companion:
-                        mask = UNIT_MASK_MINION;
-                        break;
-                    default:
-                        break;
-                }
+            case SummonControl::Pet:
+                mask = UNIT_MASK_GUARDIAN;
                 break;
-            }
+            case SummonControl::Puppet:
+                mask = UNIT_MASK_PUPPET;
+                break;
             default:
                 return nullptr;
+        }
+
+        switch (SummonSlot(properties->Slot))
+        {
+            case SummonSlot::TotemFire:
+            case SummonSlot::TotemEarth:
+            case SummonSlot::TotemWater:
+            case SummonSlot::TotemAir:
+                mask = UNIT_MASK_TOTEM;
+                break;
+            default:
+                break;
         }
     }
 

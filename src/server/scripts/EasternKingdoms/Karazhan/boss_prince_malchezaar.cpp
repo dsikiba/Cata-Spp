@@ -29,7 +29,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 // 18 Coordinates for Infernal spawns
 struct InfernalPoint

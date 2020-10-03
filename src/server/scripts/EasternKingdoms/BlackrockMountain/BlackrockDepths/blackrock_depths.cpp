@@ -25,7 +25,7 @@
 #include "Player.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldSession.h"
 
 //go_shadowforge_brazier

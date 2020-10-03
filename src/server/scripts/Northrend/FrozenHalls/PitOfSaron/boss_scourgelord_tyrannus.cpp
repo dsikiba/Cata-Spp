@@ -24,7 +24,7 @@
 #include "PlayerAI.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 
 enum Yells

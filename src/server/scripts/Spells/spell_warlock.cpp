@@ -616,7 +616,7 @@ class spell_warl_fel_synergy : public SpellScriptLoader
 
             bool CheckProc(ProcEventInfo& eventInfo)
             {
-                return GetTarget()->GetGuardianPet() && eventInfo.GetDamageInfo()->GetDamage();
+                return GetTarget()->GetActiveGuardian() && eventInfo.GetDamageInfo()->GetDamage();
             }
 
             void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)

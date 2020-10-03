@@ -36,7 +36,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 //this texts are already used by 3975 and 3976
 enum Says

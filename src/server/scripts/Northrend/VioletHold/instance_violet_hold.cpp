@@ -22,7 +22,7 @@
 #include "MotionMaster.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "violet_hold.h"
 #include "WorldPacket.h"
 #include "WorldStatePackets.h"

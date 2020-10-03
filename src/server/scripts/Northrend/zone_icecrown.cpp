@@ -24,7 +24,7 @@
 #include "ScriptedGossip.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*######
 ## npc_argent_valiant

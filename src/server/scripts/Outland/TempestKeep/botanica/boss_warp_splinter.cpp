@@ -26,7 +26,7 @@ EndScriptData */
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "the_botanica.h"
 
 enum Says

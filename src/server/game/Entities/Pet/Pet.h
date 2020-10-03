@@ -19,7 +19,7 @@
 #define TRINITYCORE_PET_H
 
 #include "PetDefines.h"
-#include "TemporarySummon.h"
+#include "Guardian.h"
 
 enum StableResultCode
 {

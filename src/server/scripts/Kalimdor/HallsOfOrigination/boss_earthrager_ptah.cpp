@@ -24,7 +24,7 @@
 #include "ScriptedCreature.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "PassiveAI.h"
 #include "GridNotifiers.h"
 #include "MoveSplineInit.h"

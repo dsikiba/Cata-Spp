@@ -28,7 +28,7 @@
 #include "InstanceScript.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "blackwing_descent.h"
 
 enum Spells

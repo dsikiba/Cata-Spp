@@ -33,7 +33,7 @@
 #include "SpellInfo.h"
 #include "ScriptMgr.h"
 #include "SplineChainMovementGenerator.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include <unordered_map>
 
 enum InnEventEntries

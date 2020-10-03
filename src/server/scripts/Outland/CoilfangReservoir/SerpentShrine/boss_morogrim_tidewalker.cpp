@@ -27,7 +27,7 @@ EndScriptData */
 #include "Map.h"
 #include "ScriptedCreature.h"
 #include "serpent_shrine.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Yells
 {

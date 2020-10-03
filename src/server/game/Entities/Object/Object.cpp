@@ -29,9 +29,11 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
+#include "Guardian.h"
 #include "Item.h"
 #include "Log.h"
 #include "MapManager.h"
+#include "Minion.h"
 #include "MiscPackets.h"
 #include "MovementPacketBuilder.h"
 #include "ObjectAccessor.h"
@@ -41,9 +43,10 @@
 #include "PhasingHandler.h"
 #include "PathGenerator.h"
 #include "Player.h"
+#include "Puppet.h"
 #include "SharedDefines.h"
 #include "SpellAuraEffects.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Totem.h"
 #include "Transport.h"
 #include "Unit.h"
@@ -2015,48 +2018,35 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
     uint32 mask = UNIT_MASK_SUMMON;
     if (properties)
     {
-        switch (properties->Control)
+        switch (SummonControl(properties->Control))
         {
-            case SUMMON_CATEGORY_PET:
-                mask = UNIT_MASK_GUARDIAN;
+            case SummonControl::Wild:
+            case SummonControl::Unk:
                 break;
-            case SUMMON_CATEGORY_PUPPET:
-                mask = UNIT_MASK_PUPPET;
-                break;
-            case SUMMON_CATEGORY_VEHICLE:
+            case SummonControl::Vehicle:
+            case SummonControl::Ally:
                 mask = UNIT_MASK_MINION;
                 break;
-            case SUMMON_CATEGORY_WILD:
-            case SUMMON_CATEGORY_ALLY:
-            case SUMMON_CATEGORY_UNK:
-            {
-                switch (SummonTitle(properties->Title))
-                {
-                    case SummonTitle::Minion:
-                    case SummonTitle::Guardian:
-                    case SummonTitle::Runeblade:
-                        mask = UNIT_MASK_GUARDIAN;
-                        break;
-                    case SummonTitle::Totem:
-                    case SummonTitle::Lightwell:
-                        mask = UNIT_MASK_TOTEM;
-                        break;
-                    case SummonTitle::Vehicle:
-                    case SummonTitle::Mount:
-                        mask = UNIT_MASK_SUMMON;
-                        break;
-                    case SummonTitle::Companion:
-                        mask = UNIT_MASK_MINION;
-                        break;
-                    default:
-                        if (properties->Flags & 512) // Mirror Image, Summon Gargoyle
-                            mask = UNIT_MASK_GUARDIAN;
-                        break;
-                }
+            case SummonControl::Pet:
+                mask = UNIT_MASK_GUARDIAN;
                 break;
-            }
+            case SummonControl::Puppet:
+                mask = UNIT_MASK_PUPPET;
+                break;
             default:
                 return nullptr;
+        }
+
+        switch (SummonSlot(properties->Slot))
+        {
+            case SummonSlot::TotemFire:
+            case SummonSlot::TotemEarth:
+            case SummonSlot::TotemWater:
+            case SummonSlot::TotemAir:
+                mask = UNIT_MASK_TOTEM;
+                break;
+            default:
+                break;
         }
     }
 

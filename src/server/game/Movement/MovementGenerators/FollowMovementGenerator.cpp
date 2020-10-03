@@ -23,7 +23,7 @@
 #include "ObjectAccessor.h"
 #include "PathGenerator.h"
 #include "Pet.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Unit.h"
 #include "Util.h"
 #include <optional>

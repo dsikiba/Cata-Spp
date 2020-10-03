@@ -22,7 +22,7 @@
 #include "InstanceScript.h"
 #include "Map.h"
 #include "MotionMaster.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "WorldStatePackets.h"
 #include "vortex_pinnacle.h"
 

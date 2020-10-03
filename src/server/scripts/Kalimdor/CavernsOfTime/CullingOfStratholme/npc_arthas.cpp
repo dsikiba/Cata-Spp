@@ -33,7 +33,7 @@
 #include "SpellInfo.h"
 #include "SpellScript.h"
 #include "SplineChainMovementGenerator.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include <array>
 #include <unordered_map>
 #include <vector>

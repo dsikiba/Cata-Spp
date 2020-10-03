@@ -30,7 +30,7 @@ EndScriptData */
 #include "Map.h"
 #include "Player.h"
 #include "serpent_shrine.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 #define MAX_ENCOUNTER 6
 

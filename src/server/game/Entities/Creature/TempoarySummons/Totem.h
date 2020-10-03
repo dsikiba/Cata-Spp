@@ -18,7 +18,7 @@
 #ifndef TRINITYCORE_TOTEM_H
 #define TRINITYCORE_TOTEM_H
 
-#include "TemporarySummon.h"
+#include "Minion.h"
 
 enum TotemType
 {

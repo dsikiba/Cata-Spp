@@ -23,7 +23,7 @@
 #include "InstanceScript.h"
 #include "Map.h"
 #include "naxxramas.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 BossBoundaryData const boundaries =
 {

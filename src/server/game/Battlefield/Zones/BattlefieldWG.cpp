@@ -33,7 +33,7 @@
 #include "Player.h"
 #include "Random.h"
 #include "SpellAuras.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "World.h"
 #include "WorldSession.h"
 #include "WorldStatePackets.h"

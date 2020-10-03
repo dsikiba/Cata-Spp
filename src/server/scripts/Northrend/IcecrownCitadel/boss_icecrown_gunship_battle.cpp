@@ -32,7 +32,7 @@
 #include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Transport.h"
 #include "TransportMgr.h"
 #include "Vehicle.h"

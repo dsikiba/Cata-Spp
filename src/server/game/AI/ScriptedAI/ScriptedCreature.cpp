@@ -28,7 +28,7 @@
 #include "ObjectAccessor.h"
 #include "Spell.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 // Spell summary for ScriptedAI::SelectSpell
 struct TSpellSummary

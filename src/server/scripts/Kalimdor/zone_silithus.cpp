@@ -37,7 +37,7 @@ EndContentData */
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*#####
 # Quest: A Pawn on the Eternal Board

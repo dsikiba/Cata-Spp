@@ -19,7 +19,7 @@
 #include "MotionMaster.h"
 #include "PassiveAI.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*####
 ## npc_valkyr_battle_maiden

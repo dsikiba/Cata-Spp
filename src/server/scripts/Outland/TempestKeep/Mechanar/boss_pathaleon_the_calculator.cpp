@@ -25,7 +25,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "mechanar.h"
 #include "ScriptedCreature.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Says
 {

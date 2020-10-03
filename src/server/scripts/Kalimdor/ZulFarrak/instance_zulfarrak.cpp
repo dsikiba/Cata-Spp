@@ -20,7 +20,7 @@
 #include "InstanceScript.h"
 #include "Map.h"
 #include "MotionMaster.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "zulfarrak.h"
 
 enum Misc

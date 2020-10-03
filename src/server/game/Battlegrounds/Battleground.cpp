@@ -37,7 +37,7 @@
 #include "Player.h"
 #include "ReputationMgr.h"
 #include "SpellAuras.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Transport.h"
 #include "Util.h"
 #include "WorldPacket.h"

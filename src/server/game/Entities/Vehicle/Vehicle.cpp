@@ -29,7 +29,7 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Unit.h"
 #include "Util.h"
 

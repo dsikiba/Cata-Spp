@@ -35,7 +35,7 @@ TODO List:
 #include "SpellHistory.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

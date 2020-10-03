@@ -37,7 +37,7 @@ EndContentData */
 #include "razorfen_downs.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*###
 ## npc_belnistrasz for Quest 3525 "Extinguishing the Idol"

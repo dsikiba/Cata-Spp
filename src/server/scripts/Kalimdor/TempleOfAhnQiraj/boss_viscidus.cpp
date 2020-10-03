@@ -22,7 +22,7 @@
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
 #include "temple_of_ahnqiraj.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

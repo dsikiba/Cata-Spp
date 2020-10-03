@@ -21,7 +21,7 @@
 #include "CreatureGroups.h"
 #include "MotionMaster.h"
 #include "Player.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Unit.h"
 #include "UnitAI.h"
 #include "UnitDefines.h"

@@ -21,8 +21,8 @@
 #include "Define.h"
 #include "Random.h"
 #include <algorithm>
-#include <exception>
 #include <iterator>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 

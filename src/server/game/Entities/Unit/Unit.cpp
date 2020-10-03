@@ -69,7 +69,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "SpellPackets.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Totem.h"
 #include "Transport.h"
 #include "UpdateFieldFlags.h"
@@ -355,7 +355,7 @@ Unit::Unit(bool isWorldObject) :
     for (uint8 i = 0; i < CURRENT_MAX_SPELL; ++i)
         m_currentSpells[i] = nullptr;
 
-    for (uint8 i = 0; i < MAX_SUMMON_SLOT; ++i)
+    for (uint8 i = 0; i < AsUnderlyingType(SummonSlot::Max); ++i)
         m_SummonSlot[i].Clear();
 
     for (uint8 i = 0; i < MAX_GAMEOBJECT_SLOT; ++i)
@@ -445,7 +445,7 @@ Unit::~Unit()
     ASSERT(!m_attacking);
     ASSERT(m_attackers.empty());
     ASSERT(m_sharedVision.empty());
-    ASSERT(m_Controlled.empty());
+    ASSERT(_charmedUnits.empty());
     ASSERT(m_appliedAuras.empty());
     ASSERT(m_ownedAuras.empty());
     ASSERT(m_removedAuras.empty());
@@ -800,10 +800,9 @@ uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDam
         // Signal to pets that their owner was attacked - except when DOT.
         if (this != victim && damagetype != DOT)
         {
-            for (Unit* controlled : victim->m_Controlled)
-                if (Creature* cControlled = controlled->ToCreature())
-                    if (cControlled->IsAIEnabled)
-                        cControlled->AI()->OwnerAttackedBy(this);
+            for (Minion* controlled : victim->_createdMinions)
+                if (controlled->IsAIEnabled)
+                    controlled->AI()->OwnerAttackedBy(this);
         }
 
         if (victim->ToPlayer()->GetCommandStatus(CHEAT_GOD))
@@ -5613,13 +5612,10 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
 
     // Let the pet know we've started attacking someting. Handles melee attacks only
     // Spells such as auto-shot and others handled in WorldSession::HandleCastSpellOpcode
-    if (GetTypeId() == TYPEID_PLAYER)
-    {
-        for (Unit* controlled : m_Controlled)
-            if (Creature* cControlled = controlled->ToCreature())
-                if (cControlled->IsAIEnabled)
-                    cControlled->AI()->OwnerAttacked(victim);
-    }
+    if (IsPlayer())
+        for (Minion* controlled : _createdMinions)
+            if (controlled->IsAIEnabled)
+                controlled->AI()->OwnerAttacked(victim);
 
     return true;
 }
@@ -5691,7 +5687,7 @@ void Unit::CombatStopWithPets(bool includingCast)
 {
     CombatStop(includingCast);
 
-    for (Unit* minion : m_Controlled)
+    for (Minion* minion : _createdMinions)
         minion->CombatStop(includingCast);
 }
 
@@ -5700,12 +5696,16 @@ bool Unit::isAttackingPlayer() const
     if (HasUnitState(UNIT_STATE_ATTACK_PLAYER))
         return true;
 
-    for (ControlList::const_iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
-        if ((*itr)->isAttackingPlayer())
+    for (Unit* controlled : _charmedUnits)
+        if (controlled->isAttackingPlayer())
             return true;
 
-    for (uint8 i = 0; i < MAX_SUMMON_SLOT; ++i)
-        if (m_SummonSlot[i])
+    for (Minion* controlled : _createdMinions)
+        if (controlled->isAttackingPlayer())
+            return true;
+
+    for (uint8 i = 0; i < AsUnderlyingType(SummonSlot::Max); ++i)
+        if (!m_SummonSlot[i].IsEmpty())
             if (Creature* summon = GetMap()->GetCreature(m_SummonSlot[i]))
                 if (summon->isAttackingPlayer())
                     return true;
@@ -5819,31 +5819,6 @@ bool Unit::HasAuraState(AuraStateType flag, SpellInfo const* spellProto, Unit co
     return HasFlag(UNIT_FIELD_AURASTATE, 1 << (flag - 1));
 }
 
-void Unit::SetOwnerGUID(ObjectGuid owner)
-{
-    if (GetOwnerGUID() == owner)
-        return;
-
-    SetGuidValue(UNIT_FIELD_SUMMONEDBY, owner);
-    if (!owner)
-        return;
-
-    // Update owner dependent fields
-    Player* player = ObjectAccessor::GetPlayer(*this, owner);
-    if (!player || !player->HaveAtClient(this)) // if player cannot see this unit yet, he will receive needed data with create object
-        return;
-
-    SetFieldNotifyFlag(UF_FLAG_OWNER);
-
-    UpdateData udata(GetMapId());
-    WorldPacket packet;
-    BuildValuesUpdateBlockForPlayer(&udata, player);
-    udata.BuildPacket(&packet);
-    player->SendDirectMessage(&packet);
-
-    RemoveFieldNotifyFlag(UF_FLAG_OWNER);
-}
-
 Unit* Unit::GetOwner() const
 {
     // Fall back to creator guid of owner guid is not available
@@ -5881,34 +5856,39 @@ Player* Unit::GetAffectingPlayer() const
     return nullptr;
 }
 
-Minion* Unit::GetFirstMinion() const
+Guardian* Unit::GetActiveGuardian() const
 {
-    if (ObjectGuid pet_guid = GetMinionGUID())
-    {
-        if (Creature* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*this, pet_guid))
-            if (pet->HasUnitTypeMask(UNIT_MASK_MINION))
-                return (Minion*)pet;
+    ObjectGuid const activeGuardianGuid = GetActiveGuardianGUID();
+    if (activeGuardianGuid.IsEmpty())
+        return nullptr;
 
-        TC_LOG_ERROR("entities.unit", "Unit::GetFirstMinion: Minion %s not exist.", pet_guid.ToString().c_str());
-        const_cast<Unit*>(this)->SetMinionGUID(ObjectGuid::Empty);
-    }
+    if (Creature* creature = ObjectAccessor::GetCreatureOrPetOrVehicle(*this, activeGuardianGuid))
+        if (creature->IsGuardian())
+            return dynamic_cast<Guardian*>(creature);
+
+    TC_LOG_FATAL("entities.unit", "Unit::GetActiveGuardian: Guardian %s not exist.", activeGuardianGuid.ToString().c_str());
+    const_cast<Unit*>(this)->SetActiveGuardianGUID(ObjectGuid::Empty);
 
     return nullptr;
 }
 
-Guardian* Unit::GetGuardianPet() const
+void Unit::SetActiveGuardian(Guardian* guardian, bool apply)
 {
-    if (ObjectGuid pet_guid = GetPetGUID())
-    {
-        if (Creature* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*this, pet_guid))
-            if (pet->HasUnitTypeMask(UNIT_MASK_GUARDIAN))
-                return (Guardian*)pet;
+    if (!guardian)
+        return;
 
-        TC_LOG_FATAL("entities.unit", "Unit::GetGuardianPet: Guardian %s not exist.", pet_guid.ToString().c_str());
-        const_cast<Unit*>(this)->SetPetGUID(ObjectGuid::Empty);
+    if (apply)
+    {
+        SetActiveGuardianGUID(guardian->GetGUID());
+        SetPetSummonSlotGUID(guardian->GetGUID());
+    }
+    else if (GetActiveGuardianGUID() == guardian->GetGUID())
+    {
+        SetPetSummonSlotGUID(ObjectGuid::Empty);
+        SetActiveGuardianGUID(ObjectGuid::Empty);
     }
 
-    return nullptr;
+    UpdatePetCombatState();
 }
 
 Unit* Unit::GetCharm() const
@@ -5938,163 +5918,79 @@ Unit* Unit::GetCharmerOrOwnerOrSelf() const
     return (Unit*)this;
 }
 
-void Unit::SetMinion(Minion* minion, bool apply)
+void Unit::SetOwnerOfMinion(Minion* minion, bool apply)
 {
     if (!minion)
     {
-        TC_LOG_ERROR("entities.unit", "Unit::SetMinion: Unit %s tried to reference a non existing minion", GetGUID().ToString().c_str());
+        TC_LOG_ERROR("entities.unit", "Unit::SetOwner: Unit %s tried to reference a non existing minion!", GetGUID().ToString().c_str());
         return;
     }
 
-    TC_LOG_DEBUG("entities.unit", "SetMinion %u for %u, apply %u", minion->GetEntry(), GetEntry(), apply);
+    if (apply && !minion->GetOwnerGUID().IsEmpty())
+    {
+        TC_LOG_FATAL("entities.unit", "Unit::SetOwner: Minion (%s) is already owned by a different owner (%s)!", minion->GetGUID().ToString().c_str(), minion->GetOwnerGUID().ToString().c_str());
+        return;
+    }
 
     if (apply)
     {
-        if (minion->GetOwnerGUID())
-        {
-            TC_LOG_FATAL("entities.unit", "SetMinion: Minion %u is not the minion of owner %u", minion->GetEntry(), GetEntry());
-            return;
-        }
-
         minion->SetOwnerGUID(GetGUID());
-
-        m_Controlled.insert(minion);
-
-        if (GetTypeId() == TYPEID_PLAYER)
-        {
-            minion->m_ControlledByPlayer = true;
-            minion->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
-        }
-
-        // Can only have one pet. If a new one is summoned, dismiss the old one.
-        if (minion->IsGuardianPet())
-        {
-            if (Guardian* oldPet = GetGuardianPet())
-            {
-                if (oldPet != minion && (oldPet->IsPet() || minion->IsPet() || oldPet->GetEntry() != minion->GetEntry()))
-                {
-                    // remove existing minion pet
-                    if (oldPet->IsPet())
-                        ((Pet*)oldPet)->Remove(PET_SAVE_DISMISS);
-                    else
-                        oldPet->UnSummon();
-                    SetPetGUID(minion->GetGUID());
-                    SetMinionGUID(ObjectGuid::Empty);
-                }
-            }
-            else
-            {
-                SetPetGUID(minion->GetGUID());
-                SetMinionGUID(ObjectGuid::Empty);
-            }
-        }
-
-        if (minion->HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))
-            AddGuidValue(UNIT_FIELD_SUMMON, minion->GetGUID());
-
-        if (minion->m_Properties && SummonTitle(minion->m_Properties->Title) == SummonTitle::Companion)
-            SetCritterGUID(minion->GetGUID());
-
-        // PvP, FFAPvP
-        minion->SetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, GetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG));
-
-        // Send infinity cooldown - client does that automatically but after relog cooldown needs to be set again
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
-
-        if (spellInfo && spellInfo->IsCooldownStartedOnEvent())
-            GetSpellHistory()->StartCooldown(spellInfo, 0, nullptr, true);
+        _ownedMinions.insert(minion);
     }
     else
     {
-        if (minion->GetOwnerGUID() != GetGUID())
-        {
-            TC_LOG_FATAL("entities.unit", "SetMinion: Minion %u is not the minion of owner %u", minion->GetEntry(), GetEntry());
-            return;
-        }
-
-        if (m_Controlled.find(minion) != m_Controlled.end())
-            m_Controlled.erase(minion);
-
-        if (minion->m_Properties && SummonTitle(minion->m_Properties->Title) == SummonTitle::Companion)
-            if (GetCritterGUID() == minion->GetGUID())
-                SetCritterGUID(ObjectGuid::Empty);
-
-        if (minion->IsGuardianPet())
-        {
-            if (GetPetGUID() == minion->GetGUID())
-                SetPetGUID(ObjectGuid::Empty);
-        }
-
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
-        // Remove infinity cooldown
-        if (spellInfo && (spellInfo->IsCooldownStartedOnEvent()))
-            GetSpellHistory()->SendCooldownEvent(spellInfo);
-
-        //if (minion->HasUnitTypeMask(UNIT_MASK_GUARDIAN))
-        {
-            if (RemoveGuidValue(UNIT_FIELD_SUMMON, minion->GetGUID()))
-            {
-                // Check if there is another minion
-                for (Unit const* controlled : m_Controlled)
-                {
-                    // do not use this check, creature do not have charm guid
-                    //if (GetCharmGUID() == (*itr)->GetGUID())
-                    if (GetGUID() == controlled->GetCharmerGUID())
-                        continue;
-
-                    //ASSERT((*itr)->GetOwnerGUID() == GetGUID());
-                    if (controlled->GetOwnerOrCreatorGUID() != GetGUID())
-                    {
-                        OutDebugInfo();
-                        controlled->OutDebugInfo();
-                        ABORT();
-                    }
-                    ASSERT(controlled->IsCreature());
-
-                    if (!controlled->HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))
-                        continue;
-
-                    if (AddGuidValue(UNIT_FIELD_SUMMON, controlled->GetGUID()))
-                    {
-                        // show another pet bar if there is no charm bar
-                        if (IsPlayer() && !GetCharmGUID())
-                        {
-                            if (controlled->IsPet())
-                                ToPlayer()->PetSpellInitialize();
-                            else
-                                ToPlayer()->CharmSpellInitialize();
-                        }
-                    }
-                    break;
-                }
-            }
-        }
+        minion->SetOwnerGUID(ObjectGuid::Empty);
+        _ownedMinions.erase(minion);
     }
-    UpdatePetCombatState();
 }
 
-void Unit::GetAllMinionsByEntry(std::list<Creature*>& Minions, uint32 entry)
+void Unit::SetCreatorOfMinion(Minion* minion, bool apply)
 {
-    for (Unit::ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end();)
+    if (!minion)
     {
-        Unit* unit = *itr;
-        ++itr;
-        if (unit->GetEntry() == entry && unit->GetTypeId() == TYPEID_UNIT
-            && unit->IsSummon()) // minion, actually
-            Minions.push_back(unit->ToCreature());
+        TC_LOG_ERROR("entities.unit", "Unit::SetCreator: Unit %s tried to reference a non existing minion!", GetGUID().ToString().c_str());
+        return;
     }
+
+    if (apply && !minion->GetCreatorGUID().IsEmpty())
+    {
+        TC_LOG_FATAL("entities.unit", "Unit::SetCreator: Minion (%s) already has a creator!", minion->GetGUID().ToString().c_str());
+        return;
+    }
+
+    if (apply)
+    {
+        minion->SetCreatorGUID(GetGUID());
+        _createdMinions.insert(minion);
+    }
+    else
+    {
+        // No need to remove the creator GUID since a creator should always be present until the creature gets destroyed.
+        _createdMinions.erase(minion);
+    }
+}
+
+void Unit::DespawnAllCreatedMinions()
+{
+    while (!_createdMinions.empty())
+        (*_createdMinions.begin())->UnSummon();
+}
+
+void Unit::GetAllMinionsByEntry(std::list<Creature*>& minions, uint32 entry)
+{
+    for (Minion* minion : _createdMinions)
+        if (minion->GetEntry() == entry)
+            minions.push_back(minion);
 }
 
 void Unit::RemoveAllMinionsByEntry(uint32 entry)
 {
-    for (Unit::ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end();)
+    for (std::set<Minion*>::iterator itr = _createdMinions.begin(); itr != _createdMinions.end();)
     {
         Unit* unit = *itr;
         ++itr;
-        if (unit->GetEntry() == entry && unit->GetTypeId() == TYPEID_UNIT
-            && unit->IsSummon()) // minion, actually
+        if (unit->GetEntry() == entry)
             unit->ToTempSummon()->UnSummon();
-        // i think this is safe because i have never heard that a despawned minion will trigger a same minion
     }
 }
 
@@ -6102,7 +5998,7 @@ void Unit::SetCharm(Unit* charm, bool apply)
 {
     if (apply)
     {
-        if (GetTypeId() == TYPEID_PLAYER)
+        if (IsPlayer())
         {
             if (!AddGuidValue(UNIT_FIELD_CHARM, charm->GetGUID()))
                 TC_LOG_FATAL("entities.unit", "Player %s is trying to charm unit %u, but it already has a charmed unit %s", GetName().c_str(), charm->GetEntry(), GetCharmGUID().ToString().c_str());
@@ -6124,13 +6020,14 @@ void Unit::SetCharm(Unit* charm, bool apply)
         if (_isWalkingBeforeCharm)
             charm->SetWalk(false);
 
-        m_Controlled.insert(charm);
+        if (charm->IsPlayer() || charm->GetOwnerOrCreatorGUID() != GetGUID())
+            _charmedUnits.insert(charm);
     }
     else
     {
         charm->ClearUnitState(UNIT_STATE_CHARMED);
 
-        if (GetTypeId() == TYPEID_PLAYER)
+        if (IsPlayer())
         {
             if (!RemoveGuidValue(UNIT_FIELD_CHARM, charm->GetGUID()))
                 TC_LOG_FATAL("entities.unit", "Player %s is trying to uncharm unit %u, but it has another charmed unit %s", GetName().c_str(), charm->GetEntry(), GetCharmGUID().ToString().c_str());
@@ -6139,7 +6036,7 @@ void Unit::SetCharm(Unit* charm, bool apply)
         if (!charm->RemoveGuidValue(UNIT_FIELD_CHARMEDBY, GetGUID()))
             TC_LOG_FATAL("entities.unit", "Unit %u is being uncharmed, but it has another charmer %s", charm->GetEntry(), charm->GetCharmerGUID().ToString().c_str());
 
-        if (charm->GetTypeId() == TYPEID_PLAYER)
+        if (charm->IsPlayer())
         {
             charm->m_ControlledByPlayer = true;
             charm->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
@@ -6161,12 +6058,8 @@ void Unit::SetCharm(Unit* charm, bool apply)
         if (charm->IsWalking() != _isWalkingBeforeCharm)
             charm->SetWalk(_isWalkingBeforeCharm);
 
-        if (charm->GetTypeId() == TYPEID_PLAYER
-            || !charm->ToCreature()->HasUnitTypeMask(UNIT_MASK_MINION)
-            || charm->GetOwnerOrCreatorGUID() != GetGUID())
-        {
-            m_Controlled.erase(charm);
-        }
+        if (charm->IsPlayer() || charm->GetOwnerOrCreatorGUID() != GetGUID())
+            _charmedUnits.erase(charm);
     }
     UpdatePetCombatState();
 }
@@ -6278,7 +6171,7 @@ Unit* Unit::GetFirstControlled() const
     // Sequence: charmed, pet, other guardians
     Unit* unit = GetCharm();
     if (!unit)
-        if (ObjectGuid guid = GetMinionGUID())
+        if (ObjectGuid guid = GetActiveGuardianGUID())
             unit = ObjectAccessor::GetUnit(*this, guid);
 
     return unit;
@@ -6287,28 +6180,23 @@ Unit* Unit::GetFirstControlled() const
 void Unit::RemoveAllControlled()
 {
     // possessed pet and vehicle
-    if (GetTypeId() == TYPEID_PLAYER)
+    if (IsPlayer())
         ToPlayer()->StopCastingCharm();
 
-    while (!m_Controlled.empty())
+    while (!_charmedUnits.empty())
     {
-        Unit* target = *m_Controlled.begin();
-        m_Controlled.erase(m_Controlled.begin());
+        Unit* target = *_charmedUnits.begin();
+        _charmedUnits.erase(_charmedUnits.begin());
+
         if (target->GetCharmerGUID() == GetGUID())
             target->RemoveCharmAuras();
-        else if (target->GetOwnerOrCreatorGUID() == GetGUID() && target->IsSummon())
-            target->ToTempSummon()->UnSummon();
         else
             TC_LOG_ERROR("entities.unit", "Unit %u is trying to release unit %u which is neither charmed nor owned by it", GetEntry(), target->GetEntry());
     }
-    if (GetPetGUID())
-        TC_LOG_FATAL("entities.unit", "Unit %u is not able to release its pet %s", GetEntry(), GetPetGUID().ToString().c_str());
-    if (GetMinionGUID())
-        TC_LOG_FATAL("entities.unit", "Unit %u is not able to release its minion %s", GetEntry(), GetMinionGUID().ToString().c_str());
     if (GetCharmGUID())
         TC_LOG_FATAL("entities.unit", "Unit %u is not able to release its charm %s", GetEntry(), GetCharmGUID().ToString().c_str());
     if (!IsPet()) // pets don't use the flag for this
-        RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT); // m_controlled is now empty, so we know none of our minions are in combat
+        RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT); // _charmedUnits is now empty, so we know none of our minions are in combat
 }
 
 bool Unit::isPossessedByPlayer() const
@@ -6347,7 +6235,7 @@ Unit* Unit::GetNextRandomRaidMemberOrPet(float radius)
         // We are pet now, return owner
         if (player != this)
             return IsWithinDistInMap(player, radius) ? player : nullptr;
-        Unit* pet = GetGuardianPet();
+        Unit* pet = GetActiveGuardian();
         // No pet, no group, nothing to return
         if (!pet)
             return nullptr;
@@ -6367,7 +6255,7 @@ Unit* Unit::GetNextRandomRaidMemberOrPet(float radius)
                 nearMembers.push_back(Target);
 
         // Push player's pet to vector
-        if (Unit* pet = Target->GetGuardianPet())
+        if (Unit* pet = Target->GetActiveGuardian())
             if (pet != this && IsWithinDistInMap(pet, radius) && pet->IsAlive() && !IsHostileTo(pet))
                 nearMembers.push_back(pet);
         }
@@ -6416,7 +6304,7 @@ void Unit::RemoveCharmAuras()
 
 void Unit::UnsummonAllTotems()
 {
-    for (uint8 i = 0; i < MAX_SUMMON_SLOT; ++i)
+    for (uint8 i = 0; i < AsUnderlyingType(SummonSlot::Max); ++i)
     {
         if (!m_SummonSlot[i])
             continue;
@@ -8898,14 +8786,16 @@ void Unit::FollowTarget(Unit* target)
 
     if (TempSummon* summon = ToTempSummon())
     {
+        if (summon->IsPet() || summon->IsGuardian() || summon->IsMinion())
+        {
+            joinFormation = true;
+            catchUpToTarget = true;
+        }
+
         if (SummonPropertiesEntry const* properties = summon->m_Properties)
         {
-            // Allied summons, pet summons join a formation unless the following exceptions are being met.
-            if (properties->Control == SUMMON_CATEGORY_ALLY || properties->Control == SUMMON_CATEGORY_PET)
-                joinFormation = true;
-
-            // Companion minipets will always be able to catch up to their target
-            if (properties->Slot == SUMMON_SLOT_MINIPET)
+            // Companions will always be able to catch up to their target
+            if (properties->Slot == AsUnderlyingType(SummonSlot::Companion))
             {
                 joinFormation = false;
                 catchUpToTarget = true;
@@ -8913,8 +8803,8 @@ void Unit::FollowTarget(Unit* target)
                 distance = DEFAULT_FOLLOW_DISTANCE;
             }
 
-            // Quest npcs follow their target outside of formations
-            if (properties->Slot == SUMMON_SLOT_QUEST)
+            // Quest npc minions follow their target outside of formations
+            if (properties->Slot == AsUnderlyingType(SummonSlot::Quest) && summon->IsMinion() && !summon->IsGuardian())
             {
                 joinFormation = false;
                 distance = DEFAULT_FOLLOW_DISTANCE;
@@ -8986,6 +8876,7 @@ void Unit::setDeathState(DeathState s)
                                                             // vehicles use special type of charm that is not removed by the next function
                                                             // triggering an assert
         UnsummonAllTotems();
+        DespawnAllCreatedMinions();
         RemoveAllControlled();
         RemoveAllAurasOnDeath();
     }
@@ -9055,18 +8946,16 @@ void Unit::UpdatePetCombatState()
 {
     ASSERT(!IsPet()); // player pets do not use UNIT_FLAG_PET_IN_COMBAT for this purpose - but player pets should also never have minions of their own to call this
 
-    bool state = false;
-    for (Unit* minion : m_Controlled)
-        if (minion->IsInCombat())
+    if (Guardian const* guardian = GetActiveGuardian())
+    {
+        if (guardian->IsInCombat())
         {
-            state = true;
-            break;
+            SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
+            return;
         }
+    }
 
-    if (state)
-        SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
-    else
-        RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
+    RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
 }
 
 //======================================================================
@@ -9958,6 +9847,7 @@ void Unit::RemoveFromWorld()
         ExitVehicle();  // Remove applied auras with SPELL_AURA_CONTROL_VEHICLE
         UnsummonAllTotems();
         RemoveAllControlled();
+        DespawnAllCreatedMinions();
 
         RemoveAreaAurasDueToLeaveWorld();
 
@@ -9969,15 +9859,6 @@ void Unit::RemoveFromWorld()
         {
             TC_LOG_FATAL("entities.unit", "Unit %u has charmer guid when removed from world", GetEntry());
             ABORT();
-        }
-
-        if (Unit* owner = GetOwner())
-        {
-            if (owner->m_Controlled.find(this) != owner->m_Controlled.end())
-            {
-                TC_LOG_FATAL("entities.unit", "Unit %u is in controlled list of %u when removed from world", GetEntry(), owner->GetEntry());
-                ABORT();
-            }
         }
 
         WorldObject::RemoveFromWorld();
@@ -11254,11 +11135,10 @@ Pet* Unit::CreateTamedPetFrom(uint32 creatureEntry, uint32 spell_id)
 
 bool Unit::InitTamedPet(Pet* pet, uint8 level, uint32 spell_id)
 {
-    pet->SetCreatorGUID(GetGUID());
     pet->SetFaction(GetFaction());
     pet->SetUInt32Value(UNIT_CREATED_BY_SPELL, spell_id);
 
-    if (GetTypeId() == TYPEID_PLAYER)
+    if (IsPlayer())
         pet->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
     if (!pet->InitStatsForLevel(level))
@@ -11277,6 +11157,8 @@ bool Unit::InitTamedPet(Pet* pet, uint8 level, uint32 spell_id)
     pet->SetFullHealth();
     pet->CastSpell(pet, 99289, true); // Energize
     pet->SetReactState(REACT_ASSIST);
+    SetOwnerOfMinion(pet, true);
+    SetCreatorOfMinion(pet, true);
     return true;
 }
 
@@ -11800,13 +11682,13 @@ bool Unit::SetCharmedBy(Unit* charmer, CharmType type, AuraApplication const* au
         return false;
 
     // dismount players when charmed
-    if (GetTypeId() == TYPEID_PLAYER)
+    if (IsPlayer())
         RemoveAurasByType(SPELL_AURA_MOUNTED);
 
-    if (charmer->GetTypeId() == TYPEID_PLAYER)
+    if (charmer->IsPlayer())
         charmer->RemoveAurasByType(SPELL_AURA_MOUNTED);
 
-    ASSERT(type != CHARM_TYPE_POSSESS || charmer->GetTypeId() == TYPEID_PLAYER);
+    ASSERT(type != CHARM_TYPE_POSSESS || charmer->IsPlayer());
     ASSERT((type == CHARM_TYPE_VEHICLE) == (GetVehicleKit() && GetVehicleKit()->IsControllableVehicle()));
 
     TC_LOG_DEBUG("entities.unit", "SetCharmedBy: charmer %u (GUID %u), charmed %u (GUID %u), type %u.", charmer->GetEntry(), charmer->GetGUID().GetCounter(), GetEntry(), GetGUID().GetCounter(), uint32(type));
@@ -11820,7 +11702,7 @@ bool Unit::SetCharmedBy(Unit* charmer, CharmType type, AuraApplication const* au
     //if (HasUnitState(UNIT_STATE_UNATTACKABLE))
     //    return false;
 
-    if (GetTypeId() == TYPEID_PLAYER && ToPlayer()->GetTransport())
+    if (IsPlayer() && ToPlayer()->GetTransport())
     {
         TC_LOG_FATAL("entities.unit", "Unit::SetCharmedBy: Player on transport is trying to charm %u (GUID %u)", GetEntry(), GetGUID().GetCounter());
         return false;
@@ -11846,7 +11728,7 @@ bool Unit::SetCharmedBy(Unit* charmer, CharmType type, AuraApplication const* au
     }
 
     // Charmed stop charming
-    if (GetTypeId() == TYPEID_PLAYER)
+    if (IsPlayer())
     {
         ToPlayer()->StopCastingCharm();
         ToPlayer()->StopCastingBindSight();
@@ -11870,7 +11752,7 @@ bool Unit::SetCharmedBy(Unit* charmer, CharmType type, AuraApplication const* au
     // Set charmed
     charmer->SetCharm(this, true);
 
-    if (GetTypeId() == TYPEID_UNIT)
+    if (IsCreature())
     {
         GetMotionMaster()->Clear(MOTION_SLOT_ACTIVE);
         PauseMovement(0, MOTION_SLOT_IDLE);
@@ -12219,7 +12101,7 @@ void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap)
                 if (Target->IsAlive())
                     TagUnitMap.push_back(Target);
 
-                if (Guardian* pet = Target->GetGuardianPet())
+                if (Guardian* pet = Target->GetActiveGuardian())
                     if (pet->IsAlive())
                         TagUnitMap.push_back(pet);
             }
@@ -12229,7 +12111,7 @@ void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap)
     {
         if ((owner == this || IsInMap(owner)) && owner->IsAlive())
             TagUnitMap.push_back(owner);
-        if (Guardian* pet = owner->GetGuardianPet())
+        if (Guardian* pet = owner->GetActiveGuardian())
             if ((pet == this || IsInMap(pet)) && pet->IsAlive())
                 TagUnitMap.push_back(pet);
     }
@@ -13630,29 +13512,31 @@ void Unit::StopAttackFaction(uint32 faction_id)
     for (CombatReference* ref : refsToEnd)
         ref->EndCombat();
 
-    for (Unit* minion : m_Controlled)
+    for (Minion* minion : _createdMinions)
         minion->StopAttackFaction(faction_id);
+    for (Unit* controlled : _charmedUnits)
+        controlled->StopAttackFaction(faction_id);
 }
 
 void Unit::OutDebugInfo() const
 {
     TC_LOG_ERROR("entities.unit", "Unit::OutDebugInfo");
     TC_LOG_DEBUG("entities.unit", "%s name %s", GetGUID().ToString().c_str(), GetName().c_str());
-    TC_LOG_DEBUG("entities.unit", "Owner %s, Minion %s, Charmer %s, Charmed %s", GetOwnerOrCreatorGUID().ToString().c_str(), GetMinionGUID().ToString().c_str(), GetCharmerGUID().ToString().c_str(), GetCharmGUID().ToString().c_str());
+    TC_LOG_DEBUG("entities.unit", "Owner %s, Minion %s, Charmer %s, Charmed %s", GetOwnerOrCreatorGUID().ToString().c_str(), GetActiveGuardianGUID().ToString().c_str(), GetCharmerGUID().ToString().c_str(), GetCharmGUID().ToString().c_str());
     TC_LOG_DEBUG("entities.unit", "In world %u, unit type mask %u", (uint32)(IsInWorld() ? 1 : 0), m_unitTypeMask);
     if (IsInWorld())
         TC_LOG_DEBUG("entities.unit", "Mapid %u", GetMapId());
 
     std::ostringstream o;
     o << "Summon Slot: ";
-    for (uint32 i = 0; i < MAX_SUMMON_SLOT; ++i)
+    for (uint32 i = 0; i < AsUnderlyingType(SummonSlot::Max); ++i)
         o << m_SummonSlot[i].ToString() << ", ";
 
     TC_LOG_DEBUG("entities.unit", "%s", o.str().c_str());
     o.str("");
 
-    o << "Controlled List: ";
-    for (ControlList::const_iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
+    o << "Charmed Unit List: ";
+    for (std::set<Unit*>::const_iterator itr = _charmedUnits.begin(); itr != _charmedUnits.end(); ++itr)
         o << (*itr)->GetGUID().ToString() << ", ";
     TC_LOG_DEBUG("entities.unit", "%s", o.str().c_str());
     o.str("");

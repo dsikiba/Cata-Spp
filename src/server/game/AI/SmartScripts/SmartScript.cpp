@@ -38,7 +38,7 @@
 #include "SmartAI.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 #include "WaypointDefines.h"
 #include <G3D/Quat.h>

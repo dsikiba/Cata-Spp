@@ -36,7 +36,7 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "Spell.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 /*#####
 # item_only_for_flight

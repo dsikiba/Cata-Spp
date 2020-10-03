@@ -29,7 +29,7 @@
 #include "ScriptedCreature.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum Spells
 {

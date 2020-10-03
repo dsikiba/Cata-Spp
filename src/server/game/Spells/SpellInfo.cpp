@@ -31,7 +31,7 @@
 #include "SpellAuraDefines.h"
 #include "SpellAuraEffects.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Vehicle.h"
 
 uint32 GetTargetFlagMask(SpellTargetObjectTypes objType)
@@ -2074,7 +2074,7 @@ SpellCastResult SpellInfo::CheckVehicle(Unit const* caster) const
                     continue;
 
                 SummonPropertiesEntry const* props = sSummonPropertiesStore.LookupEntry(Effects[i].MiscValueB);
-                if (props && props->Control != SUMMON_CATEGORY_WILD)
+                if (props && props->Control != AsUnderlyingType(SummonControl::Wild))
                     return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
             }
         }

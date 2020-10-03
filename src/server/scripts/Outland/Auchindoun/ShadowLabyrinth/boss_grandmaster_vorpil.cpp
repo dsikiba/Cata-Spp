@@ -29,7 +29,7 @@ Category: Auchindoun, Shadow Labyrinth
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "shadow_labyrinth.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 enum GrandmasterVorpil
 {

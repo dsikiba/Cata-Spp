@@ -26,7 +26,7 @@
 #include "Vehicle.h"
 #include "MotionMaster.h"
 #include "InstanceScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "SpellScript.h"
 #include "SpellInfo.h"
 

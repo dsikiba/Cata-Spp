@@ -21,7 +21,7 @@
 #include "Map.h"
 #include "MotionMaster.h"
 #include "razorfen_downs.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 Position const PosSummonTutenkash[15] =
 {

@@ -24,7 +24,7 @@
 #include "lost_city_of_the_tolvir.h"
 #include "AreaBoundary.h"
 #include "Map.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "Weather.h"
 
 enum TimedEvents

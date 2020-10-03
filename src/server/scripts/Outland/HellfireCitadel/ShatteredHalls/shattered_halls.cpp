@@ -23,7 +23,7 @@
 #include "ScriptedCreature.h"
 #include "shattered_halls.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 
 class at_nethekurse_exit : public AreaTriggerScript
 {

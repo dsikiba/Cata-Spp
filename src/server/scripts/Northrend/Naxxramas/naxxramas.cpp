@@ -22,7 +22,7 @@
 #include "MoveSplineInit.h"
 #include "ScriptedCreature.h"
 #include "PassiveAI.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "naxxramas.h"
 
 /*

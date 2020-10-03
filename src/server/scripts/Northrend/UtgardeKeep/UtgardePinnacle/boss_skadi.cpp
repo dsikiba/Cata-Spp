@@ -24,7 +24,7 @@
 #include "ScriptedCreature.h"
 #include "SpellAuras.h"
 #include "SpellScript.h"
-#include "TemporarySummon.h"
+#include "TempSummon.h"
 #include "utgarde_pinnacle.h"
 
 enum Spells
