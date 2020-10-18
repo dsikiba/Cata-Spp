@@ -50,6 +50,10 @@ void Minion::InitStats(uint32 duration)
     if (!m_Properties->Faction)
         SetFaction(m_owner->GetFaction());
 
+    // Allied summons that are no companions or quest npcs will inherit their summoner's level.
+    if (m_Properties->Slot < AsUnderlyingType(SummonSlot::Companion))
+        SetLevel(m_owner->getLevel());
+
     // Inherit guild data from summoner
     ObjectGuid guildGUID = m_owner->GetGuidValue(OBJECT_FIELD_DATA);
     if (!guildGUID.IsEmpty())

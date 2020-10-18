@@ -192,7 +192,7 @@ void TempSummon::InitStats(uint32 duration)
     if (!m_Properties)
         return;
 
-    if (Unit* owner = GetSummoner())
+    if (owner)
     {
         // Unsummon previous tempsummon when it occupies the same summon slot as we do.
         if (m_Properties->Slot > 0)
