@@ -25,6 +25,7 @@ class TC_GAME_API Minion : public TempSummon
     public:
         Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorldObject);
         void InitStats(uint32 duration) override;
+        void InitSummon() override;
         void RemoveFromWorld() override;
 
         Unit* GetOwner() const { return m_owner; }

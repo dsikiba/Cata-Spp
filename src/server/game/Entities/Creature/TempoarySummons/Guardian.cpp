@@ -59,7 +59,7 @@ void Guardian::RemoveFromWorld()
 
 void Guardian::InitSummon()
 {
-    TempSummon::InitSummon();
+    Minion::InitSummon();
 
     // Only one guardian can be active at a time
     UnsummonActiveGuardian();

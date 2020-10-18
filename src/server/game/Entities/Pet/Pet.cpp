@@ -983,31 +983,6 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
                         CastSpell(this, 50453, true);
                     break;
                 }
-                case ENTRY_INFERNAL:
-                {
-                    if (m_owner->GetTypeId() == TYPEID_PLAYER) // Infernal get 100% of owners spell, Immolation has his own coef.
-                        SetBonusDamage(int32(m_owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL)));
-
-                    float mod = 1;
-                    if (petlevel < 60)
-                        mod = 5 + (petlevel - 50) / 4;
-                    if (petlevel < 70)
-                        mod = 10 + (petlevel - 70) / 4;
-                    else if (petlevel <= 80)
-                        mod = 15 + (petlevel - 80) / 2;
-                    else
-                        mod = 20 + (petlevel - 85) / 2;
-                    if (mod < 0)
-                        mod = 0;
-                    float minDamage = (petlevel - (petlevel / 4)) * mod;
-                    float maxDamage = (petlevel + (petlevel / 4)) * mod;
-                    float attackPower = ((minDamage + maxDamage) /4) * 7;
-                    SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, minDamage);
-                    SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, maxDamage);
-                    SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, attackPower);
-                    SetCreateHealth(m_owner->CountPctFromMaxHealth(40));
-                    break;
-                }
                 case ENTRY_EBON_IMP:
                     SetBonusDamage(m_owner->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE));
                     break;

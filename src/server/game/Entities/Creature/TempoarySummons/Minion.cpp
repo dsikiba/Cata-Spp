@@ -72,6 +72,25 @@ void Minion::InitStats(uint32 duration)
     }
 }
 
+void Minion::InitSummon()
+{
+    // Some minions have passive spells as well
+    if (CreatureTemplate const* cInfo = GetCreatureTemplate())
+    {
+        if (CreatureFamilyEntry const* cFamily = sCreatureFamilyStore.LookupEntry(cInfo->family))
+        {
+            PetFamilySpellsStore::const_iterator petStore = sPetFamilySpellsStore.find(cFamily->ID);
+            if (petStore != sPetFamilySpellsStore.end())
+            {
+                for (uint32 spellId : petStore->second)
+                    CastSpell(this, spellId);
+            }
+        }
+    }
+
+    TempSummon::InitSummon();
+}
+
 void Minion::RemoveFromWorld()
 {
     if (!IsInWorld())
