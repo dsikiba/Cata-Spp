@@ -1439,7 +1439,7 @@ class achievement_the_abyss_will_gaze_into_you final : public AchievementCriteri
             if (!target)
                 return false;
 
-            if (target->IsAIEnabled)
+            if (target->IsAIEnabled())
                 return target->GetAI()->GetData(DATA_ABYSS_WILL_GAZE_INTO_YOU);
 
             return false;

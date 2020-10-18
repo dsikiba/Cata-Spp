@@ -45,12 +45,3 @@ void Puppet::Update(uint32 time)
         if (!IsAlive())
             UnSummon();
 }
-
-void Puppet::RemoveFromWorld()
-{
-    if (!IsInWorld())
-        return;
-
-    RemoveCharmedBy(nullptr);
-    Minion::RemoveFromWorld();
-}

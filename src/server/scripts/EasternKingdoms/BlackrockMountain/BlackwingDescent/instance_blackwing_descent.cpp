@@ -245,7 +245,7 @@ class instance_blackwing_descent : public InstanceMapScript
 
                             if (state == DONE)
                                 if (Creature* nefarius = GetCreature(DATA_LORD_VICTOR_NEFARIUS_GENERIC))
-                                    if (nefarius->IsAIEnabled)
+                                    if (nefarius->IsAIEnabled())
                                         nefarius->AI()->SetData(DATA_BOSS_DEFEATED, type);
 
                             _roomStalkerGUIDs.clear();
@@ -256,7 +256,7 @@ class instance_blackwing_descent : public InstanceMapScript
                     case DATA_MALORIAK:
                         if (state == DONE)
                             if (Creature* nefarius = GetCreature(DATA_LORD_VICTOR_NEFARIUS_GENERIC))
-                                if (nefarius->IsAIEnabled)
+                                if (nefarius->IsAIEnabled())
                                     nefarius->AI()->SetData(DATA_BOSS_DEFEATED, type);
                         break;
                     case DATA_ATRAMEDES:
@@ -269,7 +269,7 @@ class instance_blackwing_descent : public InstanceMapScript
                         {
                             instance->SpawnGroupDespawn(SPAWN_GROUP_ANCIENT_DWARVEN_SHIELDS, false);
                             if (Creature* nefarius = GetCreature(DATA_LORD_VICTOR_NEFARIUS_GENERIC))
-                                if (nefarius->IsAIEnabled)
+                                if (nefarius->IsAIEnabled())
                                     nefarius->AI()->SetData(DATA_BOSS_DEFEATED, type);
                         }
                         break;
@@ -343,7 +343,7 @@ class instance_blackwing_descent : public InstanceMapScript
                                 atramedes->SetReactState(REACT_PASSIVE);
                                 atramedes->SendSetPlayHoverAnim(true);
 
-                                if (atramedes->IsAIEnabled)
+                                if (atramedes->IsAIEnabled())
                                     atramedes->AI()->DoAction(ACTION_START_ATRAMEDES_INTRO);
                             }
                         }
@@ -356,7 +356,7 @@ class instance_blackwing_descent : public InstanceMapScript
                         else
                             nefarius = GetCreature(DATA_LORD_VICTOR_NEFARIUS_GENERIC);
 
-                        if (nefarius && nefarius->IsAIEnabled)
+                        if (nefarius && nefarius->IsAIEnabled())
                             nefarius->AI()->SetData(DATA_HEROES_ENTERED_HALLS, DONE);
                         break;
                     }

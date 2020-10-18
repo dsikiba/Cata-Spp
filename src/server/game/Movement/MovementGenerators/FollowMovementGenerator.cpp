@@ -102,11 +102,11 @@ static void ApplyCatchUpMod(Unit* owner, Position dest, float& velocity)
 
 static void DoMovementInform(Unit* owner, Unit* target)
 {
-    if (owner->GetTypeId() != TYPEID_UNIT)
+    if (!owner->IsCreature())
         return;
 
-    if (UnitAI* ai = owner->GetAI())
-        static_cast<CreatureAI*>(ai)->MovementInform(FOLLOW_MOTION_TYPE, target->GetGUID().GetCounter());
+    if (CreatureAI* AI = owner->ToCreature()->AI())
+        AI->MovementInform(FOLLOW_MOTION_TYPE, target->GetGUID().GetCounter());
 }
 
 static void GetFollowOffsets(uint8 followerIndex, float& distance, float& relativeAngle)

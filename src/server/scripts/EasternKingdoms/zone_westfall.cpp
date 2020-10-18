@@ -349,7 +349,7 @@ struct npc_westfall_hobo_witness : public ScriptedAI
 
     void JustDied(Unit* who) override
     {
-        if (who->IsCreature() && who->ToCreature()->IsAIEnabled)
+        if (who->IsCreature() && who->ToCreature()->IsAIEnabled())
             who->ToCreature()->AI()->DoAction(ACTION_AGGRO_HOBO_DONE);
         me->CastSpell(me, SPELL_SUMMON_RAGAMUFFIN_LOOTER);
     }
@@ -511,7 +511,7 @@ class spell_westfall_aggro_hobo : public SpellScript
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         if (Creature* creature = GetHitCreature())
-            if (creature->IsAIEnabled)
+            if (creature->IsAIEnabled())
                 creature->AI()->SetGUID(GetCaster()->GetGUID(), 0);
     }
 

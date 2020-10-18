@@ -484,7 +484,7 @@ public:
 
                 if (aura)
                     if (aura->GetStackAmount() == 3)
-                        if (target->GetTypeId() == TYPEID_UNIT && target->IsAIEnabled)
+                        if (target->GetTypeId() == TYPEID_UNIT && target->IsAIEnabled())
                             target->ToCreature()->AI()->DoAction(ACTION_UNHOLY_POWER);
             }
         }
@@ -531,10 +531,10 @@ public:
 
                 if (aura)
                     if (aura->GetStackAmount() == 3)
-                        if (target->GetTypeId() == TYPEID_UNIT && target->IsAIEnabled)
+                        if (target->GetTypeId() == TYPEID_UNIT && target->IsAIEnabled())
                             target->ToCreature()->AI()->DoAction(ACTION_UNHOLY_POWER);
 
-                if (target->GetTypeId() == TYPEID_UNIT && target->IsAIEnabled)
+                if (target->GetTypeId() == TYPEID_UNIT && target->IsAIEnabled())
                     target->ToCreature()->AI()->DoAction(ACTION_TO_THE_GROUND);
             }
         }

@@ -1286,7 +1286,7 @@ class spell_omnotron_recharging : public AuraScript
     {
         if (GetTargetApplication()->GetRemoveMode().HasFlag(AuraRemoveFlags::Expired))
             if (Creature* golem = GetTarget()->ToCreature())
-                if (golem->IsAIEnabled)
+                if (golem->IsAIEnabled())
                     golem->AI()->DoAction(ACTION_ACTIVATE_GOLEM);
     }
 
@@ -1336,7 +1336,7 @@ class spell_omnotron_inactive : public SpellScript
         Unit* target = GetHitUnit();
         target->CastSpell(target, SPELL_POWERED_DOWN, true);
         if (Creature* golem = target->ToCreature())
-            if (golem->IsAIEnabled)
+            if (golem->IsAIEnabled())
                 golem->AI()->DoAction(ACTION_DEACTIVATE_GOLEM);
     }
 
@@ -1609,7 +1609,7 @@ class achievement_achieve_a_tron_static_shock : public AchievementCriteriaScript
 
         bool OnCheck(Player* /*source*/, Unit* target) override
         {
-            if (target && target->IsAIEnabled)
+            if (target && target->IsAIEnabled())
                 return !(target->GetAI()->GetData(DATA_FAILED_CRITERIA_MASK) & FAILED_CRITERIA_STATIC_SHOCK);
 
             return false;
@@ -1623,7 +1623,7 @@ class achievement_achieve_a_tron_poison_bomb : public AchievementCriteriaScript
 
         bool OnCheck(Player* /*source*/, Unit* target) override
         {
-            if (target && target->IsAIEnabled)
+            if (target && target->IsAIEnabled())
                 return !(target->GetAI()->GetData(DATA_FAILED_CRITERIA_MASK) & FAILED_CRITERIA_POISON_BOMB);
 
             return false;
@@ -1637,7 +1637,7 @@ class achievement_achieve_a_tron_arcane_annihilator : public AchievementCriteria
 
         bool OnCheck(Player* /*source*/, Unit* target) override
         {
-            if (target && target->IsAIEnabled)
+            if (target && target->IsAIEnabled())
                 return !(target->GetAI()->GetData(DATA_FAILED_CRITERIA_MASK) & FAILED_CRITERIA_ARCANE_ANNIHILATOR);
 
             return false;
@@ -1651,7 +1651,7 @@ class achievement_achieve_a_tron_flamethrower : public AchievementCriteriaScript
 
         bool OnCheck(Player* /*source*/, Unit* target) override
         {
-            if (target && target->IsAIEnabled)
+            if (target && target->IsAIEnabled())
                 return !(target->GetAI()->GetData(DATA_FAILED_CRITERIA_MASK) & FAILED_CRITERIA_FLAMETHROWER);
 
             return false;

@@ -65,7 +65,7 @@ void Guardian::InitSummon()
     UnsummonActiveGuardian();
     m_owner->SetActiveGuardian(this, true);
 
-    if (m_owner->IsPlayer() && m_owner->GetActiveGuardianGUID() == GetGUID() && !m_owner->GetCharmGUID())
+    if (m_owner->IsPlayer() && m_owner->GetActiveGuardianGUID() == GetGUID() && !m_owner->GetCharmedGUID())
         m_owner->ToPlayer()->CharmSpellInitialize();
 }
 

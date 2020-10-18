@@ -707,7 +707,7 @@ class achievement_the_only_escape final : public AchievementCriteriaScript
 
         bool OnCheck(Player* /*source*/, Unit* target)
         {
-            if (target && target->IsAIEnabled)
+            if (target && target->IsAIEnabled())
                 return (target->GetAI()->GetData(DATA_THE_ONLY_ESCAPE) == DONE);
 
             return false;

@@ -216,9 +216,9 @@ void TempSummon::InitSummon()
 {
     if (Unit* owner = GetSummoner())
     {
-        if (owner->IsCreature() && owner->ToCreature()->IsAIEnabled)
+        if (owner->IsCreature() && owner->ToCreature()->IsAIEnabled())
             owner->ToCreature()->AI()->JustSummoned(this);
-        if (IsAIEnabled)
+        if (IsAIEnabled())
             AI()->IsSummonedBy(owner);
     }
 }
@@ -240,7 +240,7 @@ void TempSummon::UnSummon(uint32 msTime)
     }
 
     if (Unit* owner = GetSummoner())
-        if (owner->IsCreature() && owner->ToCreature()->IsAIEnabled)
+        if (owner->IsCreature() && owner->ToCreature()->IsAIEnabled())
             owner->ToCreature()->AI()->SummonedCreatureDespawn(this);
 
     AddObjectToRemoveList();

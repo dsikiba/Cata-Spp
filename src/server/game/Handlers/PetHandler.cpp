@@ -128,7 +128,7 @@ void WorldSession::HandlePetStopAttack(WorldPacket &recvData)
         return;
     }
 
-    if (pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
+    if (pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharmed())
     {
         TC_LOG_ERROR("entities.pet", "HandlePetStopAttack: %s isn't a pet or charmed creature of player %s",
             guid.ToString().c_str(), GetPlayer()->GetName().c_str());
@@ -210,7 +210,7 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                         if (pet->GetVictim())
                             pet->AttackStop();
 
-                        if (pet->GetTypeId() != TYPEID_PLAYER && pet->ToCreature()->IsAIEnabled)
+                        if (pet->GetTypeId() != TYPEID_PLAYER && pet->ToCreature()->IsAIEnabled())
                         {
                             charmInfo->SetIsCommandAttack(true);
                             charmInfo->SetIsAtStay(false);
@@ -377,9 +377,8 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                     if (pet->GetVictim() != unit_target)
                     {
                         pet->GetMotionMaster()->Clear();
-                        if (pet->ToCreature()->IsAIEnabled)
+                        if (CreatureAI* AI = pet->ToCreature()->AI())
                         {
-                            CreatureAI* AI = pet->ToCreature()->AI();
                             if (PetAI* petAI = dynamic_cast<PetAI*>(AI))
                                 petAI->_AttackStart(unit_target); // force victim switch
                             else
@@ -699,7 +698,7 @@ void WorldSession::HandlePetAbandon(WorldPacket& recvData)
     {
         if (pet->IsPet())
             _player->RemovePet((Pet*)pet, PET_SAVE_AS_DELETED);
-        else if (pet->GetGUID() == _player->GetCharmGUID())
+        else if (pet->GetGUID() == _player->GetCharmedGUID())
             _player->StopCastingCharm();
     }
 }
@@ -712,7 +711,7 @@ void WorldSession::HandlePetSpellAutocastOpcode(WorldPacket& recvPacket)
     uint8  state;                                           //1 for on, 0 for off
     recvPacket >> guid >> spellid >> state;
 
-    if (!_player->GetActiveGuardian() && !_player->GetCharm())
+    if (!_player->GetActiveGuardian() && !_player->GetCharmed())
         return;
 
     if (guid.IsPlayer())
@@ -720,7 +719,7 @@ void WorldSession::HandlePetSpellAutocastOpcode(WorldPacket& recvPacket)
 
     Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
 
-    if (!pet || (pet != _player->GetActiveGuardian() && pet != _player->GetCharm()))
+    if (!pet || (pet != _player->GetActiveGuardian() && pet != _player->GetCharmed()))
     {
         TC_LOG_ERROR("entities.pet", "HandlePetSpellAutocastOpcode. %s isn't pet of player %s (%s).", guid.ToString().c_str(), GetPlayer()->GetName().c_str(), GetPlayer()->GetGUID().ToString().c_str());
         return;
@@ -766,12 +765,12 @@ void WorldSession::HandlePetCastSpellOpcode(WorldPacket& recvPacket)
     TC_LOG_DEBUG("entities.pet", "WORLD: CMSG_PET_CAST_SPELL, %s, castCount: %u, spellId %u, castFlags %u", guid.ToString().c_str(), castCount, spellId, castFlags);
 
     // This opcode is also sent from charmed and possessed units (players and creatures)
-    if (!_player->GetActiveGuardian() && !_player->GetCharm())
+    if (!_player->GetActiveGuardian() && !_player->GetCharmed())
         return;
 
     Unit* caster = ObjectAccessor::GetUnit(*_player, guid);
 
-    if (!caster || (caster != _player->GetActiveGuardian() && caster != _player->GetCharm()))
+    if (!caster || (caster != _player->GetActiveGuardian() && caster != _player->GetCharmed()))
     {
         TC_LOG_ERROR("entities.pet", "HandlePetCastSpellOpcode: %s isn't pet of player %s (%s).", guid.ToString().c_str(), GetPlayer()->GetName().c_str(), GetPlayer()->GetGUID().ToString().c_str());
         return;
@@ -979,7 +978,7 @@ void WorldSession::HandleRequestPetInfoOpcode(WorldPacket& /*recvData*/)
     if (_player->GetPet() && _player->CanControlPet())
         _player->PetSpellInitialize();
 
-    if (Unit* charm = _player->GetCharm())
+    if (Unit* charm = _player->GetCharmed())
     {
         if (charm->HasUnitState(UNIT_STATE_POSSESSED))
             _player->PossessSpellInitialize();

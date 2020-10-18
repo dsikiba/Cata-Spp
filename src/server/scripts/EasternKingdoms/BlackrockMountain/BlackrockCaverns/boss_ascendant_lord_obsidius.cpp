@@ -376,7 +376,7 @@ class achievement_ascendant_descending : public AchievementCriteriaScript
             if (!target)
                 return false;
 
-            if (target->IsAIEnabled)
+            if (target->IsAIEnabled())
                 return target->GetAI()->GetData(DATA_ASCENDANT_DESCENDING);
 
             return false;
