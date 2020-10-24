@@ -106,7 +106,7 @@ public:
         pet->SetGuidValue(UNIT_FIELD_CREATEDBY, player->GetGUID());
         pet->SetFaction(player->GetFaction());
 
-        if (!pet->InitStatsForLevel(creatureTarget->getLevel()))
+        if (!pet->InitStatsForLevel(creatureTarget->getLevel(), false))
         {
             TC_LOG_ERROR("misc", "InitStatsForLevel() in EffectTameCreature failed! Pet deleted.");
             handler->PSendSysMessage("Error 2");

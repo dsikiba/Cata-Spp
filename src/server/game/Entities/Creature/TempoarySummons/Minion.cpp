@@ -16,6 +16,7 @@
  */
 
 #include "Minion.h"
+#include "CreatureData.h"
 #include "DBCStructure.h"
 
 Minion::Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorldObject)
@@ -51,8 +52,15 @@ void Minion::InitStats(uint32 duration)
         SetFaction(m_owner->GetFaction());
 
     // Allied summons that are no companions or quest npcs will inherit their summoner's level.
+    uint8 level = getLevel();
+    bool referenceOwner = false;
     if (m_Properties->Slot < AsUnderlyingType(SummonSlot::Companion))
-        SetLevel(m_owner->getLevel());
+    {
+        level = m_owner->getLevel();
+        referenceOwner = true;
+    }
+
+    InitStatsForLevel(level, referenceOwner);
 
     // Inherit guild data from summoner
     ObjectGuid guildGUID = m_owner->GetGuidValue(OBJECT_FIELD_DATA);
@@ -83,7 +91,7 @@ void Minion::InitSummon()
             if (petStore != sPetFamilySpellsStore.end())
             {
                 for (uint32 spellId : petStore->second)
-                    CastSpell(this, spellId);
+                    CastSpell(nullptr, spellId);
             }
         }
     }
@@ -108,6 +116,122 @@ void Minion::RemoveFromWorld()
 
     // All done, now we can return to the default cleanup procedure
     TempSummon::RemoveFromWorld();
+}
+
+// This function is a modified version of Creature::UpdateLevelDependantStats to support dynamic level and expansion scaling.
+bool Minion::InitStatsForLevel(uint8 level, bool referenceOwner /*= false*/)
+{
+    CreatureTemplate const* cInfo = GetCreatureTemplate();
+    ASSERT(cInfo);
+
+    SetLevel(level);
+    uint8 expansion = IsHunterPet() ? EXPANSION_CLASSIC : cInfo->expansion;
+
+    // If we inherit the level of our owner, we change our expansion based on his reached level
+    uint8 ownerLevel = m_owner->getLevel();
+    if (referenceOwner && !IsHunterPet())
+    {
+        if (ownerLevel <= DBCManager::GetMaxLevelForExpansion(EXPANSION_CLASSIC))
+            expansion = EXPANSION_CLASSIC;
+        else if (ownerLevel > DBCManager::GetMaxLevelForExpansion(EXPANSION_CLASSIC) && ownerLevel <= DBCManager::GetMaxLevelForExpansion(EXPANSION_THE_BURNING_CRUSADE))
+            expansion = EXPANSION_THE_BURNING_CRUSADE;
+        else if (ownerLevel > DBCManager::GetMaxLevelForExpansion(EXPANSION_THE_BURNING_CRUSADE) && ownerLevel <= DBCManager::GetMaxLevelForExpansion(EXPANSION_CATACLYSM))
+            expansion = EXPANSION_WRATH_OF_THE_LICH_KING;
+        else if (ownerLevel >= DBCManager::GetMaxLevelForExpansion(EXPANSION_CATACLYSM))
+            expansion = EXPANSION_CATACLYSM;
+    }
+
+    uint32 rank = IsHunterPet() ? 0 : cInfo->rank;
+    CreatureBaseStats const* stats = sObjectMgr->GetCreatureBaseStats(getLevel(), IsHunterPet() ? UNIT_CLASS_WARRIOR : cInfo->unit_class);
+    if (!stats)
+        return false;
+
+    // Health
+    float healthmod = IsHunterPet() ? 1.f : _GetHealthMod(rank);
+
+    uint32 basehp = uint32(std::ceil(stats->BaseHealth[expansion] * cInfo->ModHealth * cInfo->ModHealthExtra));
+    uint32 health = uint32(basehp * healthmod);
+    AddPct(health, GetMaxHealthModifier());
+
+    SetCreateHealth(health);
+    SetMaxHealth(health);
+    SetHealth(health);
+    ResetPlayerDamageReq();
+
+    // Mana
+    switch (getClass())
+    {
+        case UNIT_CLASS_PALADIN:
+        case UNIT_CLASS_MAGE:
+        {
+            uint32 mana = 0;
+            if (uint32 basemana = stats->BaseMana)
+                mana = uint32(std::ceil(basemana * cInfo->ModMana * cInfo->ModManaExtra));
+            SetCreateMana(mana);
+            SetMaxPower(POWER_MANA, mana);
+            SetFullPower(POWER_MANA);
+            break;
+        }
+        default: // We don't set max power here, 0 makes power bar hidden
+            break;
+    }
+
+    SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)health);
+
+    // Attack
+    float basedamage = stats->BaseDamage[expansion];
+    float weaponBaseMinDamage = basedamage;
+    float weaponBaseMaxDamage = basedamage * 1.5f;
+
+    SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, weaponBaseMinDamage);
+    SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, weaponBaseMaxDamage);
+    SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, weaponBaseMinDamage);
+    SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, weaponBaseMaxDamage);
+    SetBaseWeaponDamage(RANGED_ATTACK, MINDAMAGE, weaponBaseMinDamage);
+    SetBaseWeaponDamage(RANGED_ATTACK, MAXDAMAGE, weaponBaseMaxDamage);
+    SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, stats->AttackPower);
+    SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE, stats->RangedAttackPower);
+
+    // Defense
+    float armor = (float)stats->GenerateArmor(cInfo);
+    SetModifierValue(UNIT_MOD_ARMOR, BASE_VALUE, armor);
+
+    // From here on we do own additional steps
+    SetMeleeDamageSchool(SpellSchools(cInfo->dmgschool));
+    SetAttackTime(BASE_ATTACK, IsHunterPet() ? BASE_ATTACK_TIME : cInfo->BaseAttackTime);
+    SetAttackTime(OFF_ATTACK, IsHunterPet() ? BASE_ATTACK_TIME : cInfo->BaseAttackTime);
+    SetAttackTime(RANGED_ATTACK, IsHunterPet() ? BASE_ATTACK_TIME : cInfo->BaseAttackTime);
+    SetCanModifyStats(true);
+
+    // Power
+    if (IsHunterPet())
+        SetPowerType(POWER_FOCUS);
+    else if (IsPetGhoul() || IsRisenAlly())
+        SetPowerType(POWER_ENERGY);
+    else
+        SetPowerType(POWER_MANA);
+
+    // Speed Mods
+    SetFloatValue(UNIT_MOD_CAST_SPEED, 1.0f);
+    SetFloatValue(UNIT_MOD_CAST_HASTE, 1.0f);
+
+    // Scale
+    SetObjectScale(GetNativeObjectScale());
+
+    // Resistances
+    for (uint8 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
+        SetModifierValue(UnitMods(UNIT_MOD_RESISTANCE_START + i), BASE_VALUE, IsHunterPet() ? 0.f : cInfo->resistance[i]);
+
+    // @todo: this should be for ALL creatures, not just minions, pets, whatever
+    if (PetLevelInfo const* pInfo = sObjectMgr->GetPetLevelInfo(GetEntry(), level))
+    {
+        for (uint8 stat = 0; stat < MAX_STATS; ++stat)
+            SetCreateStat(Stats(stat), float(pInfo->stats[stat]));
+
+        UpdateAllStats();
+    }
+
+    return true;
 }
 
 bool Minion::IsWarlockMinion() const

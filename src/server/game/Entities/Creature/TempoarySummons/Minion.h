@@ -28,6 +28,9 @@ class TC_GAME_API Minion : public TempSummon
         void InitSummon() override;
         void RemoveFromWorld() override;
 
+        // StatSystem helpers
+        virtual bool InitStatsForLevel(uint8 level, bool referenceOwner);
+
         Unit* GetOwner() const { return m_owner; }
 
         bool IsPetGhoul() const { return GetEntry() == ENTRY_GHOUL; } // Ghoul may be guardian or pet

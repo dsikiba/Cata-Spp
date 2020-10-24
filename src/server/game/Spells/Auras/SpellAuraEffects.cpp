@@ -3485,13 +3485,13 @@ void AuraEffect::HandleAuraModStat(AuraApplication const* aurApp, uint8 mode, bo
             if (spellGroupVal)
             {
                 target->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_VALUE, float(spellGroupVal), !apply);
-                if (target->GetTypeId() == TYPEID_PLAYER || target->IsPet())
+                if (target->IsPlayer() || target->IsMinion())
                     target->ApplyStatBuffMod(Stats(i), float(spellGroupVal), !apply);
             }
 
             //target->ApplyStatMod(Stats(i), m_amount, apply);
             target->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_VALUE, float(GetAmount()), apply);
-            if (target->GetTypeId() == TYPEID_PLAYER || target->IsPet())
+            if (target->IsPlayer() || target->IsMinion())
                 target->ApplyStatBuffMod(Stats(i), (float)GetAmount(), apply);
         }
     }

@@ -600,8 +600,8 @@ bool Creature::UpdateEntry(uint32 entry, CreatureData const* data /*= nullptr*/,
     if (updateLevel)
         SelectLevel();
 
-    // Do not update guardian stats here - they are handled in Guardian::InitStatsForLevel()
-    if (!IsGuardian())
+    // Do not update minion stats here - they are handled in Minion::InitStatsForLevel
+    if (!IsMinion())
     {
         uint32 previousHealth = GetHealth();
         UpdateLevelDependantStats();
@@ -1378,7 +1378,7 @@ void Creature::SelectLevel()
 void Creature::UpdateLevelDependantStats()
 {
     CreatureTemplate const* cInfo = GetCreatureTemplate();
-    uint32 rank = IsPet() ? 0 : cInfo->rank;
+    uint32 rank = cInfo->rank;
     CreatureBaseStats const* stats = sObjectMgr->GetCreatureBaseStats(getLevel(), cInfo->unit_class);
 
     // health

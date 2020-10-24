@@ -5850,8 +5850,6 @@ void SpellMgr::LoadSpellInfoCorrections()
         properties->Title = AsUnderlyingType(SummonTitle::Totem);
     if (SummonPropertiesEntry* properties = const_cast<SummonPropertiesEntry*>(sSummonPropertiesStore.LookupEntry(628))) // Hungry Plaguehound
         properties->Control = AsUnderlyingType(SummonControl::Pet);
-    if (SummonPropertiesEntry* properties = const_cast<SummonPropertiesEntry*>(sSummonPropertiesStore.LookupEntry(829))) // Raise Dead + Voidwalker
-        properties->Slot = AsUnderlyingType(SummonSlot::Pet);
 
     if (LockEntry* entry = const_cast<LockEntry*>(sLockStore.LookupEntry(36))) // 3366 Opening, allows to open without proper key
         entry->Type[2] = LOCK_KEY_NONE;

@@ -851,8 +851,29 @@ void Player::_RemoveAllStatBonuses()
 ########                         ########
 #######################################*/
 
-bool Creature::UpdateStats(Stats /*stat*/)
+bool Creature::UpdateStats(Stats stat)
 {
+    switch (stat)
+    {
+        case STAT_STRENGTH:
+            UpdateAttackPowerAndDamage();
+            break;
+        case STAT_AGILITY:
+            UpdateArmor();
+            break;
+        case STAT_STAMINA:
+            UpdateMaxHealth();
+            break;
+        case STAT_INTELLECT:
+            UpdateMaxPower(POWER_MANA);
+            break;
+        case STAT_SPIRIT:
+            UpdatePowerRegeneration(POWER_MANA);
+            break;
+        default:
+            break;
+    }
+
     return true;
 }
 
@@ -889,8 +910,13 @@ void Creature::UpdateArmor()
 
 void Creature::UpdateMaxHealth()
 {
-    float value = GetTotalAuraModValue(UNIT_MOD_HEALTH);
-    SetMaxHealth(uint32(value));
+    float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
+    float multiplicator = 10.0f;
+
+    float value = GetTotalAuraModValue(UNIT_MOD_HEALTH) + stamina * multiplicator;
+    AddPct(value, GetMaxHealthModifier());
+
+    SetMaxHealth((uint32)value);
 }
 
 uint32 Creature::GetPowerIndex(Powers power) const
@@ -909,9 +935,12 @@ void Creature::UpdateMaxPower(Powers power)
 
     UnitMods unitMod = UnitMods(UNIT_MOD_POWER_START + power);
 
+    float addValue = (power == POWER_MANA) ? GetStat(STAT_INTELLECT) - GetCreateStat(STAT_INTELLECT) : 0.0f;
+    float multiplicator = 15.0f;
+
     float value = GetModifierValue(unitMod, BASE_VALUE) + GetCreatePowers(power);
     value *= GetModifierValue(unitMod, BASE_PCT);
-    value += GetModifierValue(unitMod, TOTAL_VALUE);
+    value += GetModifierValue(unitMod, TOTAL_VALUE) + addValue * multiplicator;
     value *= GetModifierValue(unitMod, TOTAL_PCT);
 
     SetMaxPower(power, uint32(std::lroundf(value)));
@@ -919,22 +948,27 @@ void Creature::UpdateMaxPower(Powers power)
 
 void Creature::UpdatePowerRegeneration(Powers powerType)
 {
+    if (GetPowerType() != powerType)
+        return;
+
     float powerRegenMod = GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, powerType) / 5.f;
     float powerRegenModPct = GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN_PERCENT, powerType);
 
     switch (powerType)
     {
         case POWER_MANA:
-            // Regeneration for controlled units
-            if (!GetCharmerGUID().IsEmpty() || !GetOwnerGUID().IsEmpty())
+        {
+            float spirit = GetStat(STAT_SPIRIT);
+            if (spirit != 0)
             {
-                float spiritRegen = (GetStat(STAT_SPIRIT) / 5.f + 17.f);
+                float spiritRegen = spirit / 5.f + 17.f;
                 SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER, spiritRegen + powerRegenMod);
                 SetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER, powerRegenMod);
             }
-            else // Default creature regeneration value.
-                SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER, 8.714059f + powerRegenMod); // Most common value in sniffs. Todo: research
+            else // Default creature regeneration value. Fallback value if creature does not have a spirit stat.
+                SetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER, 8.714059f + powerRegenMod); // Most common value in sniffs.
             break;
+        }
         case POWER_ENERGY:
         {
             float regenerationRate = CalculatePct<float>(10, powerRegenModPct) + powerRegenMod;
@@ -951,6 +985,10 @@ void Creature::UpdateAttackPowerAndDamage(bool ranged)
 {
     UnitMods unitMod = ranged ? UNIT_MOD_ATTACK_POWER_RANGED : UNIT_MOD_ATTACK_POWER;
 
+    float apFromStrengthBonus = 0.f;
+    if (!ranged)
+        apFromStrengthBonus = (GetStat(STAT_STRENGTH) - GetCreateStat(STAT_STRENGTH)) * 2.f;
+
     uint16 index = UNIT_FIELD_ATTACK_POWER;
     uint16 indexModPos = UNIT_FIELD_ATTACK_POWER_MOD_POS;
     uint16 indexModNeg = UNIT_FIELD_ATTACK_POWER_MOD_NEG;
@@ -964,7 +1002,7 @@ void Creature::UpdateAttackPowerAndDamage(bool ranged)
         indexMulti = UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER;
     }
 
-    float baseAttackPower       = GetModifierValue(unitMod, BASE_VALUE) * GetModifierValue(unitMod, BASE_PCT);
+    float baseAttackPower       = (GetModifierValue(unitMod, BASE_VALUE) + apFromStrengthBonus) * GetModifierValue(unitMod, BASE_PCT);
     float attackPowerMod        = GetModifierValue(unitMod, TOTAL_VALUE);
     float attackPowerMultiplier = GetModifierValue(unitMod, TOTAL_PCT) - 1.0f;
 
@@ -1026,222 +1064,11 @@ void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, 
     float basePct          = GetModifierValue(unitMod, BASE_PCT) * attackSpeedMulti;
     float totalValue       = GetModifierValue(unitMod, TOTAL_VALUE);
     float totalPct         = addTotalPct ? GetModifierValue(unitMod, TOTAL_PCT) : 1.0f;
-    float dmgMultiplier    = GetCreatureTemplate()->ModDamage; // = ModDamage * _GetDamageMod(rank);
+    float dmgMultiplier    = !IsGuardian() ? GetCreatureTemplate()->ModDamage : 1.f; // = ModDamage * _GetDamageMod(rank);
 
     minDamage = ((weaponMinDamage + baseValue) * dmgMultiplier * basePct + totalValue) * totalPct;
     maxDamage = ((weaponMaxDamage + baseValue) * dmgMultiplier * basePct + totalValue) * totalPct;
-}
 
-/*#######################################
-########                         ########
-########    PETS STAT SYSTEM     ########
-########                         ########
-#######################################*/
-
-bool Guardian::UpdateStats(Stats stat)
-{
-    if (stat >= MAX_STATS)
-        return false;
-
-    // value = ((base_value * base_pct) + total_value) * total_pct
-    float value  = GetTotalStatValue(stat);
-    ApplyStatBuffMod(stat, m_statFromOwner[stat], false);
-    float ownersBonus = 0.0f;
-
-    SetStat(stat, int32(value));
-    m_statFromOwner[stat] = ownersBonus;
-    ApplyStatBuffMod(stat, m_statFromOwner[stat], true);
-
-    switch (stat)
-    {
-        case STAT_STRENGTH:
-            UpdateAttackPowerAndDamage();
-            break;
-        case STAT_AGILITY:
-            UpdateArmor();
-            break;
-        case STAT_STAMINA:
-            UpdateMaxHealth();
-            break;
-        case STAT_INTELLECT:
-            UpdateMaxPower(POWER_MANA);
-            break;
-        case STAT_SPIRIT:
-            break;
-        default:
-            break;
-    }
-
-    return true;
-}
-
-bool Guardian::UpdateAllStats()
-{
-    UpdateMaxHealth();
-
-    for (uint8 i = STAT_STRENGTH; i < MAX_STATS; ++i)
-        UpdateStats(Stats(i));
-
-    for (uint8 i = POWER_MANA; i < MAX_POWERS; ++i)
-        UpdateMaxPower(Powers(i));
-
-    UpdateAllResistances();
-
-    return true;
-}
-
-void Guardian::UpdateResistances(uint32 school)
-{
-    if (school > SPELL_SCHOOL_NORMAL)
-    {
-        float value  = GetTotalAuraModValue(UnitMods(UNIT_MOD_RESISTANCE_START + school));
-        SetResistance(SpellSchools(school), int32(value));
-    }
-    else
-        UpdateArmor();
-}
-
-void Guardian::UpdateArmor()
-{
-    float value = 0.0f;
-    UnitMods unitMod = UNIT_MOD_ARMOR;
-
-    value  = GetModifierValue(unitMod, BASE_VALUE);
-    value *= GetModifierValue(unitMod, BASE_PCT);
-    value += GetModifierValue(unitMod, TOTAL_VALUE);
-    value *= GetModifierValue(unitMod, TOTAL_PCT);
-
-    SetArmor(int32(value));
-}
-
-void Guardian::UpdateMaxHealth()
-{
-    UnitMods unitMod = UNIT_MOD_HEALTH;
-    float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
-    float multiplicator = 10.0f;
-
-    float value = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
-    value *= GetModifierValue(unitMod, BASE_PCT);
-    value += GetModifierValue(unitMod, TOTAL_VALUE) + stamina * multiplicator;
-    value *= GetModifierValue(unitMod, TOTAL_PCT);
-
-    SetMaxHealth((uint32)value);
-}
-
-void Guardian::UpdateMaxPower(Powers power)
-{
-    if (GetPowerIndex(power) == MAX_POWERS)
-        return;
-
-    UnitMods unitMod = UnitMods(UNIT_MOD_POWER_START + power);
-
-    float addValue = (power == POWER_MANA) ? GetStat(STAT_INTELLECT) - GetCreateStat(STAT_INTELLECT) : 0.0f;
-    float multiplicator = 15.0f;
-
-    float value = GetModifierValue(unitMod, BASE_VALUE) + GetCreatePowers(power);
-    value *= GetModifierValue(unitMod, BASE_PCT);
-    value += GetModifierValue(unitMod, TOTAL_VALUE) + addValue * multiplicator;
-    value *= GetModifierValue(unitMod, TOTAL_PCT);
-
-    SetMaxPower(power, int32(value));
-}
-
-void Guardian::UpdateAttackPowerAndDamage(bool ranged)
-{
-    if (ranged)
-        return;
-
-    float ap_per_strength = 2.0f;
-    float val = GetStat(STAT_STRENGTH) - 20.0f;
-
-    val *= ap_per_strength;
-
-    UnitMods unitMod = UNIT_MOD_ATTACK_POWER;
-
-    SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, val);
-
-    // in BASE_VALUE of UNIT_MOD_ATTACK_POWER for creatures we store data of meleeattackpower field in DB
-    float base_attPower  = GetModifierValue(unitMod, BASE_VALUE) * GetModifierValue(unitMod, BASE_PCT);
-    float attPowerMod = GetModifierValue(unitMod, TOTAL_VALUE);
-    float attPowerMultiplier = GetModifierValue(unitMod, TOTAL_PCT) - 1.0f;
-
-    // UNIT_FIELD_(RANGED)_ATTACK_POWER field
-    SetInt32Value(UNIT_FIELD_ATTACK_POWER, int32(base_attPower));
-    // UNIT_FIELD_(RANGED)_ATTACK_POWER_MOD_POS field
-    SetInt32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, int32(attPowerMod > 0.f ? attPowerMod : 0.f));
-    // UNIT_FIELD_(RANGED)_ATTACK_POWER_MOD_NEG field
-    SetInt32Value(UNIT_FIELD_ATTACK_POWER_MOD_NEG, int32(attPowerMod < 0.f ? -attPowerMod : 0.f));
-    // UNIT_FIELD_(RANGED)_ATTACK_POWER_MULTIPLIER field
-    SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, attPowerMultiplier);
-
-    // automatically update weapon damage after attack power modification
-    UpdateDamagePhysical(BASE_ATTACK);
-
-    // update pet spell power
-    int32 spellDamage = 0;
-    for (auto itr : GetAuraEffectsByType(SPELL_AURA_MOD_DAMAGE_DONE))
-        spellDamage += itr->GetAmount();
-
-    SetBonusDamage(spellDamage);
-}
-
-void Guardian::UpdateDamagePhysical(WeaponAttackType attType)
-{
-    if (attType > BASE_ATTACK)
-        return;
-
-    float bonusDamage = 0.0f;
-    if (m_owner->GetTypeId() == TYPEID_PLAYER)
-    {
-        //force of nature
-        if (GetEntry() == ENTRY_TREANT)
-        {
-            int32 spellDmg = int32(m_owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_NATURE)) + m_owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_NATURE);
-            if (spellDmg > 0)
-                bonusDamage = spellDmg * 0.09f;
-        }
-        //greater fire elemental
-        else if (GetEntry() == ENTRY_FIRE_ELEMENTAL)
-        {
-            int32 spellDmg = int32(m_owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE)) + m_owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_FIRE);
-            if (spellDmg > 0)
-                bonusDamage = spellDmg * 0.4f;
-        }
-    }
-
-    UnitMods unitMod = UNIT_MOD_DAMAGE_MAINHAND;
-
-    float att_speed = float(GetAttackTime(BASE_ATTACK))/1000.0f;
-
-    float base_value  = GetModifierValue(unitMod, BASE_VALUE) + GetTotalAttackPowerValue(attType)/ 14.0f * att_speed  + bonusDamage;
-    float base_pct    = GetModifierValue(unitMod, BASE_PCT);
-    float total_value = GetModifierValue(unitMod, TOTAL_VALUE);
-    float total_pct   = GetModifierValue(unitMod, TOTAL_PCT);
-
-    float weapon_mindamage = GetWeaponDamageRange(BASE_ATTACK, MINDAMAGE);
-    float weapon_maxdamage = GetWeaponDamageRange(BASE_ATTACK, MAXDAMAGE);
-
-    float mindamage = ((base_value + weapon_mindamage) * base_pct + total_value) * total_pct;
-    float maxdamage = ((base_value + weapon_maxdamage) * base_pct + total_value) * total_pct;
-
-    /// @todo: remove this
-    Unit::AuraEffectList const& mDummy = GetAuraEffectsByType(SPELL_AURA_MOD_ATTACKSPEED);
-    for (Unit::AuraEffectList::const_iterator itr = mDummy.begin(); itr != mDummy.end(); ++itr)
-    {
-        switch ((*itr)->GetSpellInfo()->Id)
-        {
-            case 61682:
-            case 61683:
-                AddPct(mindamage, -(*itr)->GetAmount());
-                AddPct(maxdamage, -(*itr)->GetAmount());
-                break;
-            default:
-                break;
-        }
-    }
-
-    SetStatFloatValue(UNIT_FIELD_MINDAMAGE, mindamage);
-    SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, maxdamage);
 }
 
 void Guardian::SetBonusDamage(int32 damage)

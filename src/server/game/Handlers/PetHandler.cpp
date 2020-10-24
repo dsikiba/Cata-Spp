@@ -108,8 +108,9 @@ void WorldSession::HandlePetAction(WorldPacket& recvData)
         HandlePetActionHelper(pet, guid1, spellid, flag, guid2, x, y, z);
     else
     {
-        for (std::set<Minion*>::iterator itr = _player->_ownedMinions.begin(); itr != _player->_ownedMinions.end(); ++itr)
-            HandlePetActionHelper(*itr, guid1, spellid, flag, guid2, x, y, z);
+        std::set<Minion*> minionsList = _player->_ownedMinions;
+        for (Minion* minion : minionsList)
+            HandlePetActionHelper(minion, guid1, spellid, flag, guid2, x, y, z);
     }
 }
 
@@ -260,8 +261,8 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                             else
                                 GetPlayer()->RemovePet((Pet*)pet, PET_SAVE_DISMISS);
                         }
-                        else if (pet->HasUnitTypeMask(UNIT_MASK_MINION))
-                            ((Minion*)pet)->UnSummon();
+                        else if (pet->IsMinion())
+                            dynamic_cast<Minion*>(pet)->UnSummon();
                     }
                     break;
                 case COMMAND_MOVE_TO:
@@ -278,6 +279,7 @@ void WorldSession::HandlePetActionHelper(Unit* pet, ObjectGuid guid1, uint32 spe
                     break;
                 default:
                     TC_LOG_ERROR("entities.pet", "WORLD: unknown PET flag Action %i and spellid %i.", uint32(flag), spellid);
+                    break;
             }
             break;
         case ACT_REACTION:                                  // 0x6
